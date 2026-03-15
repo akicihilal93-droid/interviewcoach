@@ -771,40 +771,7 @@
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <button class="btn btn-ghost" onclick="goBack('screen-round')">← Back</button>
-      <button class="btn btn-primary" onclick="goToWarmup()">Continue →</button>
-    </div>
-  </div>
-
-  <!-- ═══ SCREEN 3: Warm-up Chat ═══ -->
-  <div id="screen-warmup" class="screen">
-    <h2>Quick warm-up</h2>
-    <p class="subtitle">A few light questions to get you in the zone before the real interview begins.</p>
-
-    <div class="tip">🔊 Make sure your volume is up! Tap the button below to hear the question, then record your answer.</div>
-
-    <div class="card">
-      <div class="chat-messages" id="warmup-chat"></div>
-
-      <!-- Hear question button -->
-      <div id="warmup-hear-row" style="display:none; margin-bottom:12px;">
-        <button class="btn btn-ghost btn-sm" onclick="replayWarmupQuestion()" style="font-size:13px;">🔊 Replay question</button>
-      </div>
-
-      <!-- Voice row — always visible once question loads -->
-      <div id="warmup-voice-row" style="display:none; align-items:center; gap:12px; margin-bottom:10px;">
-        <button id="warmup-mic-btn" class="btn btn-primary" onclick="toggleWarmupMic()" style="min-width:160px;">🎙️ Tap to speak</button>
-        <span id="warmup-rec-status" style="font-size:13px; color:var(--ink3);"></span>
-      </div>
-      <input type="hidden" id="warmup-input"/>
-
-      <div id="warmup-done-row" style="display:none; text-align:right; margin-top:12px;">
-        <button class="btn btn-primary" onclick="goToInterview()">Start the interview →</button>
-      </div>
-    </div>
-
-    <div style="display:flex; justify-content:space-between;">
-      <button class="btn btn-ghost" onclick="goBack('screen-onboarding')">← Back</button>
-      <button class="btn btn-ghost btn-sm" onclick="skipWarmup()">Skip warm-up →</button>
+      <button class="btn btn-primary" onclick="goToInterview()">Continue →</button>
     </div>
   </div>
 
@@ -1056,12 +1023,11 @@ function setScreen(id) {
 }
 const stepMap = {
   'screen-apikey':    '',
-  'screen-upload':    'Step 1 of 6',
-  'screen-round':     'Step 2 of 6',
-  'screen-onboarding':'Step 3 of 6',
-  'screen-warmup':    'Step 4 of 6',
-  'screen-interview': 'Step 5 of 6',
-  'screen-report':    'Step 6 of 6'
+  'screen-upload':    'Step 1 of 5',
+  'screen-round':     'Step 2 of 5',
+  'screen-onboarding':'Step 3 of 5',
+  'screen-interview': 'Step 4 of 5',
+  'screen-report':    'Step 5 of 5'
 };
 function setStepIndicator(screenId) {
   $('step-indicator').textContent = stepMap[screenId] || '';
@@ -1323,9 +1289,10 @@ function goToOnboarding() {
 function goToWarmup() {
   state.goal = $('goal-text').value;
   state.feedbackPref = state.feedbackPref || 'after_each';
-  setScreen('screen-warmup');
-  setStepIndicator('screen-warmup');
-  initWarmup();
+  // Go straight to interview — warmup questions are built in
+  setScreen('screen-interview');
+  setStepIndicator('screen-interview');
+  initInterview();
 }
 
 function skipWarmup() {
@@ -1453,9 +1420,11 @@ function formatTime(s) {
 
 function onAnswerInput() {
   const val = ($('answer-input').value || '').trim();
+  const isWarmup = state.currentQ < 3;
   if (val.length > 3) {
-    if (state.feedbackPref === 'end_only') {
+    if (isWarmup || state.feedbackPref === 'end_only') {
       $('next-only-btn').style.display = 'inline-flex';
+      $('next-only-btn').textContent = isWarmup ? 'Next →' : 'Next question →';
       $('submit-answer-btn').style.display = 'none';
     } else {
       $('submit-answer-btn').style.display = 'inline-flex';
@@ -1570,8 +1539,10 @@ function stopIntMic() {
     $('mic-status').textContent = `✅ Answer recorded (${formatTime(micSeconds)})`;
     $('mic-status').style.color = 'var(--green)';
 
-    if (state.feedbackPref === 'end_only') {
+    const isWarmup = state.currentQ < 3;
+    if (isWarmup || state.feedbackPref === 'end_only') {
       $('next-only-btn').style.display = 'inline-flex';
+      $('next-only-btn').textContent = isWarmup ? 'Next →' : 'Next question →';
     } else {
       $('submit-answer-btn').style.display = 'inline-flex';
     }
@@ -1700,31 +1671,63 @@ function stopWarmupMic(send) {
   if (send && $('warmup-input').value.trim()) sendWarmup();
 }
 
-function sendWarmup() {
+async function sendWarmup() {
   const val = ($('warmup-input').value || '').trim();
   if (!val) return;
   addChatMsg('user', val);
   state.warmupMessages.push({ role: 'user', content: val });
   $('warmup-input').value = '';
   warmupTranscript = '';
+  $('warmup-voice-row').style.display = 'none';
+  $('warmup-hear-row').style.display = 'none';
   state.warmupCount++;
 
   if (state.warmupCount >= warmupQuestions.length) {
-    const closing = "Great — you're warmed up and ready to go! Click the button below to start your interview.";
-    $('warmup-voice-row').style.display = 'none';
+    // Generate a genuine closing based on what they actually said
+    const lastAnswer = val.toLowerCase();
+    let closing;
+    if (lastAnswer.length < 10 || /i don'?t know|not sure|no idea|nothing|n\/a/i.test(lastAnswer)) {
+      closing = "No worries at all — sometimes it's hard to put things into words on the spot. That's exactly what practice is for. Let's get into the interview and work on it together.";
+    } else {
+      closing = "Thanks for sharing that. Good — you're warmed up. Let's get into the interview.";
+    }
     setTimeout(() => {
       addChatMsg('ai', closing);
       speak(closing);
       $('warmup-done-row').style.display = 'block';
     }, 500);
   } else {
-    $('warmup-voice-row').style.display = 'none';
+    // Generate a contextual transition based on what they actually said
+    const nextQ = warmupQuestions[state.warmupCount];
+    currentWarmupQuestion = nextQ;
+
+    // Build a short genuine bridge response
+    const bridgePrompt = `You are a warm, professional interviewer doing a quick warm-up chat before a job interview.
+
+The candidate just answered: "${val}"
+
+Write ONE very short bridge sentence (max 12 words) that genuinely reacts to what they said before moving to the next question. 
+
+Rules:
+- If the answer is vague, short, or "I don't know" — acknowledge that naturally without being fake positive. E.g. "Fair enough, no worries." or "That's okay, let's keep going."
+- If the answer is good — give a brief genuine reaction. E.g. "That's a solid foundation." or "Good to know."
+- NEVER say "That's great!", "Wonderful!", "Insightful!", or any hollow praise
+- Do NOT ask another question — just the bridge sentence
+- Sound human, not robotic`;
+
+    let bridge = '';
+    try {
+      bridge = await callClaude(bridgePrompt);
+      bridge = bridge.trim().replace(/^["']|["']$/g, '');
+    } catch(e) {
+      bridge = '';
+    }
+
     setTimeout(() => {
-      const nextQ = warmupQuestions[state.warmupCount];
-      currentWarmupQuestion = nextQ;
-      addChatMsg('ai', nextQ);
-      state.warmupMessages.push({ role: 'assistant', content: nextQ });
-      speak(nextQ);
+      const fullMsg = bridge ? `${bridge} ${nextQ}` : nextQ;
+      addChatMsg('ai', fullMsg);
+      state.warmupMessages.push({ role: 'assistant', content: fullMsg });
+      speak(fullMsg);
       $('warmup-voice-row').style.display = 'flex';
       $('warmup-hear-row').style.display = 'block';
     }, 600);
@@ -1817,7 +1820,7 @@ function updatePersonaBar() {
 
 function initInterview() {
   const cfg = ROUND_CONFIG[state.round || 'general'];
-  state.totalQ = cfg.totalQ;
+  state.totalQ = cfg.totalQ + 3; // +3 for warmup questions at start
   state.currentQ = 0;
   state.currentRoundIdx = 0;
   state.questions = [];
@@ -1825,6 +1828,18 @@ function initInterview() {
   state.answers = [];
   state.feedbacks = [];
   state.scores = [];
+
+  // Pre-fill first 3 as warmup questions
+  const warmups = [
+    "Welcome! Before we get started, tell me a bit about yourself and what draws you to this opportunity.",
+    "What's one achievement you're most proud of in your career or studies so far?",
+    "What's your biggest challenge going into interviews — and what are you working on to improve it?"
+  ];
+  warmups.forEach((q, i) => {
+    state.questions[i] = q;
+    state.questionTypes[i] = 'warmup';
+  });
+
   const title = state.jobTitle || 'this role';
   $('int-job-label').textContent = title;
   updatePersonaBar();
@@ -1852,8 +1867,8 @@ function getContext() {
   return ctx;
 }
 
-const badgeMap = { behavioral:'badge-behavioral', technical:'badge-technical', case:'badge-case', general:'badge-general' };
-const badgeLabelMap = { behavioral:'Behavioural', technical:'Technical', case:'Case', general:'General' };
+const badgeMap = { behavioral:'badge-behavioral', technical:'badge-technical', case:'badge-case', general:'badge-general', warmup:'badge-general' };
+const badgeLabelMap = { behavioral:'Behavioural', technical:'Technical', case:'Case', general:'General', warmup:'Warm-up' };
 
 async function loadQuestion() {
   // Stop any active mic
@@ -1874,15 +1889,16 @@ async function loadQuestion() {
   }
 
   const cfg = getActiveRoundConfig();
-  const qType = cfg.qTypes[state.currentQ % cfg.qTypes.length] || 'general';
+  const isWarmup = qIdx < 3;
+  const qType = isWarmup ? 'warmup' : (cfg.qTypes[(qIdx - 3) % cfg.qTypes.length] || 'general');
   state.questionTypes[qIdx] = qType;
 
   $('q-type-badge-inner').className = `q-type-badge ${badgeMap[qType]}`;
   $('q-type-badge-inner').textContent = badgeLabelMap[qType];
   $('int-type-badge').className = `q-type-badge ${badgeMap[qType]}`;
   $('int-type-badge').textContent = badgeLabelMap[qType];
-  $('q-num-inner').textContent = `Question ${qIdx+1} of ${state.totalQ}`;
-  $('int-q-counter').textContent = `Q ${qIdx+1} / ${state.totalQ}`;
+  $('q-num-inner').textContent = isWarmup ? `Warm-up ${qIdx+1} of 3` : `Question ${qIdx-2} of ${state.totalQ-3}`;
+  $('int-q-counter').textContent = isWarmup ? `Warm-up ${qIdx+1}/3` : `Q ${qIdx-2} / ${state.totalQ-3}`;
   $('question-loading').style.display = 'block';
   $('question-speaking').style.display = 'none';
   $('question-text').style.display = 'none';
@@ -1900,6 +1916,20 @@ async function loadQuestion() {
   $('mic-timer').style.display = 'none';
   $('next-only-btn').style.display = 'none';
   updateDots();
+
+  // For warmup questions (first 3), use pre-set questions directly
+  if (qType === 'warmup') {
+    const q = state.questions[qIdx]; // already set in initInterview
+    $('question-loading').style.display = 'none';
+    typewriteQuestion(q, () => {
+      $('answer-area').style.display = 'block';
+      // Warmup questions — no feedback, just Next
+      $('submit-answer-btn').style.display = 'none';
+      $('next-only-btn').style.display = 'none';
+      $('next-only-btn').textContent = 'Next →';
+    });
+    return;
+  }
 
   const prevQs = state.questions
     .map((q, i) => {
@@ -1978,6 +2008,7 @@ function typewriteQuestion(text, cb) {
     // Show tip based on question type
     const qType = state.questionTypes[state.currentQ];
     const tips = {
+      warmup: '💡 Warm-up: Speak naturally — this is just to get you comfortable. No pressure.',
       behavioral: '💡 Tip: Use the STAR method — briefly describe the Situation, your Task, the Action you took, and the Result. Keep it to 60–90 seconds.',
       technical: '💡 Tip: Think out loud. State your approach first, then walk through it step by step. It\'s okay to ask a clarifying question.',
       case: '💡 Tip: Structure your answer — state the problem, your framework, key assumptions, and your recommendation. 60–90 seconds.',
@@ -2050,20 +2081,28 @@ async function submitAnswer() {
 
   const ctx = getContext();
   const qType = state.questionTypes[state.currentQ];
-  const prompt = `You are an expert interview coach. Evaluate this candidate's answer.
+  const prompt = `You are a strict, honest interview coach. Evaluate this candidate's answer with full objectivity.
 
 ${ctx}
 Question type: ${qType}
 Question: ${state.questions[state.currentQ]}
 Candidate's answer: ${ans}
 
+CRITICAL RULES:
+- Be brutally honest. Do NOT soften bad feedback with compliments or encouragement.
+- If the answer is weak, vague, or off-topic — say so directly. Do not say "good attempt" or "you made a start".
+- If the score is below 6, "what_was_good" should be empty string "" — do not invent positives that aren't there.
+- If the score is below 4, both "strengths" tags should reflect what was MISSING, not what was good.
+- Only give genuine praise when the answer genuinely earns it (score 7+).
+- Be a professional assessor, not a cheerleader.
+
 Provide feedback in this EXACT JSON format (no markdown, no extra text):
 {
   "score": <integer 1-10>,
-  "strengths": ["<short strength tag>", "<short strength tag>"],
-  "improvements": ["<short improvement tag>", "<short improvement tag>"],
-  "what_was_good": "<2 sentences on what worked well>",
-  "how_to_improve": "<2 sentences on concrete improvements>",
+  "strengths": ["<genuine strength tag, or what was missing if score low>", "<second tag>"],
+  "improvements": ["<specific improvement needed>", "<second improvement>"],
+  "what_was_good": "<2 sentences on what genuinely worked — empty string if score below 6>",
+  "how_to_improve": "<2 direct sentences on exactly what needs to change>",
   "star_note": "<only if behavioral: 1 sentence on STAR structure, else empty string>"
 }`;
 
@@ -2131,8 +2170,8 @@ function renderInlineFeedback(fb) {
   (fb.improvements || []).forEach(t => { const s = document.createElement('span'); s.className='fb-tag fb-tag-improve'; s.textContent=t; tagRow.appendChild(s); });
 
   let html = '';
-  if (fb.what_was_good) html += `<div class="feedback-section"><div class="feedback-section-title" style="color:var(--green);">What worked</div><div>${fb.what_was_good}</div></div>`;
-  if (fb.how_to_improve) html += `<div class="feedback-section"><div class="feedback-section-title" style="color:var(--amber);">How to improve</div><div>${fb.how_to_improve}</div></div>`;
+  if (fb.what_was_good && fb.what_was_good.trim()) html += `<div class="feedback-section"><div class="feedback-section-title" style="color:var(--green);">What worked</div><div>${fb.what_was_good}</div></div>`;
+  if (fb.how_to_improve) html += `<div class="feedback-section"><div class="feedback-section-title" style="color:var(--amber);">What to fix</div><div>${fb.how_to_improve}</div></div>`;
   if (fb.star_note) html += `<div class="feedback-section"><div class="feedback-section-title" style="color:var(--blue);">STAR structure</div><div>${fb.star_note}</div></div>`;
   $('fb-body').innerHTML = html;
 }
