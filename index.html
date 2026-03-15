@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script>
+(async function() {
+  const _sb = window.supabase.createClient(
+    'https://nrcwvyqbbvxjlkuyhlpa.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk'
+  );
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  window._supabaseClient = _sb;
+  window._supabaseSession = session;
+})();
+</script>
 <title>Interview Coach — AI-Powered Prep</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
@@ -2086,38 +2099,41 @@ async function submitAnswer() {
 
   const ctx = getContext();
   const qType = state.questionTypes[state.currentQ];
-  const prompt = `You are an interview assessment system. Output clinical, factual scoring only. No persona. No warmth.
+  const prompt = `ROLE: Interview scoring system. Not an interviewer. Not a coach. A scoring machine.
+OUTPUT: JSON only. No other text before or after.
+TONE: Zero. Clinical. Robotic. No warmth, no encouragement, no personality.
 
-${ctx}
 Question type: ${qType}
 Question: ${state.questions[state.currentQ]}
-Candidate's answer: ${ans}
+Answer given: ${ans}
+${state.jobTitle ? `Role being interviewed for: ${state.jobTitle}` : ''}
+${state.experience ? `Candidate level: ${state.experience}` : ''}
 
-ABSOLUTE BANNED WORDS/PHRASES — if any of these appear in your output, it is wrong:
-insightful, great, good, well done, impressive, strong, excellent, interesting, thoughtful, honest, refreshing, valid, solid, nice, clear, concise, effective, commendable, admirable, worth noting, appreciate, well-structured, well-articulated, love, that shows, that's, great context, good context, helpful context, useful, valuable, meaningful, relevant point, fair, reasonable, understandable, relatable, I can see, I hear you, that tells me
+BANNED — these words must NEVER appear in output under any circumstance:
+wonderful, great, good, well, nice, excellent, impressive, strong, solid, clear, concise, honest, insightful, thoughtful, interesting, refreshing, valid, valuable, meaningful, fair, reasonable, commendable, admirable, effective, structured, articulated, love, appreciate, that shows, that tells, I can see, I hear, well done, good attempt, good start, great context, good context, helpful, useful, relatable, understandable
 
-HARD RULES:
-- score < 7: "what_was_good" = "" with no exceptions
-- score < 7: "strengths" = [] with no exceptions
-- "I don't know" / silence / blank / one word: score = 1, what_was_good = "", strengths = [], how_to_improve = "No answer was provided."
-- Every sentence must start with "The answer..." or "The candidate..." or "Next time..." — never "You..."
-- Write like a machine scoring a test. No personality.
+SCORING RULES (strict):
+- "I don't know" / silence / blank / 1-3 words → score = 1, strengths = [], what_was_good = ""
+- Vague with no example → score = 3-4
+- Partially answered → score = 5-6
+- Answered with substance → score = 7-8
+- Answered with structure + specific example → score = 9-10
 
-SCORING:
-- 1-2: No answer, silence, "I don't know", or completely off-topic
-- 3-4: Attempted but missing key content, vague, no examples
-- 5-6: Some relevant content but lacks depth or structure
-- 7-8: Covered the question with relevant content and structure
-- 9-10: Specific, structured, directly addressed with strong examples
+OUTPUT RULES:
+- score < 7: strengths = [], what_was_good = ""
+- score >= 7: what_was_good starts with "The answer covered..." or "The candidate described..."
+- how_to_improve starts with "The answer should..." or "Next time..."
+- NO sentences starting with "You"
+- NO adjectives that imply praise
 
-OUTPUT FORMAT — respond ONLY with this JSON, no other text:
+OUTPUT FORMAT:
 {
-  "score": <integer 1-10>,
-  "strengths": <if score >= 7: array of 1-2 short factual tags. If score < 7: []>,
-  "improvements": ["<exactly what was missing>", "<second specific gap>"],
-  "what_was_good": "<if score >= 7: one factual sentence starting 'The answer covered...' or 'The candidate described...'. If score < 7: ''>",
-  "how_to_improve": "<one or two sentences: exactly what to add or change. Start with 'The answer should...' or 'Next time...'>",
-  "star_note": "<if behavioral: one sentence on STAR structure. Otherwise: ''>"
+  "score": <1-10>,
+  "strengths": [],
+  "improvements": ["<gap 1>", "<gap 2>"],
+  "what_was_good": "",
+  "how_to_improve": "<what was missing or what to change>",
+  "star_note": "<if behavioral only: STAR structure assessment. Otherwise: ''>"
 }`;
 
   try {
