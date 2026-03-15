@@ -10,8 +10,10 @@
     'https://nrcwvyqbbvxjlkuyhlpa.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk'
   );
+  // Wait a moment for session to be stored after redirect
+  await new Promise(r => setTimeout(r, 500));
   const { data: { session } } = await _sb.auth.getSession();
-  if (!session) { window.location.href = '/auth.html'; return; }
+  if (!session) { window.location.replace('https://www.acedit.it.com/auth.html'); return; }
   window._supabaseClient = _sb;
   window._supabaseSession = session;
 })();
