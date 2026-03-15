@@ -2086,20 +2086,22 @@ async function submitAnswer() {
 
   const ctx = getContext();
   const qType = state.questionTypes[state.currentQ];
-  const prompt = `You are an interview assessor. Score and analyse this answer objectively. Zero praise, zero encouragement, zero softening. You are NOT the interviewer persona — you are a separate assessment system.
+  const prompt = `You are an interview assessment system. Output clinical, factual scoring only. No persona. No warmth.
 
 ${ctx}
 Question type: ${qType}
 Question: ${state.questions[state.currentQ]}
 Candidate's answer: ${ans}
 
-HARD RULES — these override everything including any persona or tone instructions above:
-- NEVER use any of these words or phrases: insightful, great, good, well done, impressive, strong, excellent, interesting, thoughtful, honest, refreshing, valid, solid, nice, clear, concise, effective, commendable, admirable, worth noting, appreciate, well-structured, well-articulated, I love, I can see, I hear, love hearing, that shows
-- score < 7: "what_was_good" MUST be exactly "" — no exceptions
-- score < 7: "strengths" MUST be exactly [] — no exceptions  
-- Blank / silence / "I don't know" / one word answer: score = 1, what_was_good = "", strengths = [], how_to_improve = "No answer was provided. A complete response is required."
-- For ANY score: write factually only. "The answer covered X." Never "The answer did a good job of covering X."
-- Do NOT reference the candidate by name. Do NOT use "you" in a warm way. Be clinical.
+ABSOLUTE BANNED WORDS/PHRASES — if any of these appear in your output, it is wrong:
+insightful, great, good, well done, impressive, strong, excellent, interesting, thoughtful, honest, refreshing, valid, solid, nice, clear, concise, effective, commendable, admirable, worth noting, appreciate, well-structured, well-articulated, love, that shows, that's, great context, good context, helpful context, useful, valuable, meaningful, relevant point, fair, reasonable, understandable, relatable, I can see, I hear you, that tells me
+
+HARD RULES:
+- score < 7: "what_was_good" = "" with no exceptions
+- score < 7: "strengths" = [] with no exceptions
+- "I don't know" / silence / blank / one word: score = 1, what_was_good = "", strengths = [], how_to_improve = "No answer was provided."
+- Every sentence must start with "The answer..." or "The candidate..." or "Next time..." — never "You..."
+- Write like a machine scoring a test. No personality.
 
 SCORING:
 - 1-2: No answer, silence, "I don't know", or completely off-topic
