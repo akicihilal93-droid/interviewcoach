@@ -764,10 +764,10 @@
       <div class="field-group">
         <label class="field-label">When would you like feedback?</label>
         <div class="chips" id="feedbackPref-chips">
-          <div class="chip selected" onclick="selectChip('feedbackPref',this,'after_each')">After each question</div>
-          <div class="chip" onclick="selectChip('feedbackPref',this,'end_only')">At the end only</div>
+          <div class="chip" onclick="selectChip('feedbackPref',this,'after_each')">After each question</div>
+          <div class="chip selected" onclick="selectChip('feedbackPref',this,'end_only')">At the end only</div>
         </div>
-        <p style="font-size:12px; color:var(--ink4); margin-top:8px;" id="feedback-pref-desc">You'll receive scored feedback immediately after each answer, plus a full report at the end.</p>
+        <p style="font-size:12px; color:var(--ink4); margin-top:8px;" id="feedback-pref-desc">Answer all questions without interruption. Full detailed feedback at the end only.</p>
       </div>
 
       <div class="field-group">
@@ -979,7 +979,7 @@ const state = {
   apiKey: '',
   openaiKey: '',
   candidateName: '',
-  feedbackPref: 'after_each', // after_each | end_only | both
+  feedbackPref: 'end_only', // after_each | end_only
   round: '',           // hr | hiring | technical | exec | full | general
   currentRoundIdx: 0, // for full journey
   resumeFile: null,
@@ -2086,30 +2086,36 @@ async function submitAnswer() {
 
   const ctx = getContext();
   const qType = state.questionTypes[state.currentQ];
-  const prompt = `You are a strict, honest interview coach. Evaluate this candidate's answer with full objectivity.
+  const prompt = `You are an interview assessor. Score and analyse this answer objectively. Zero praise, zero encouragement, zero softening. You are NOT the interviewer persona — you are a separate assessment system.
 
 ${ctx}
 Question type: ${qType}
 Question: ${state.questions[state.currentQ]}
 Candidate's answer: ${ans}
 
-CRITICAL RULES:
-- NEVER use words like "insightful", "great", "good", "well done", "impressive", "strong", "excellent", "interesting", "thoughtful", "honest", "refreshing", "fair enough", or ANY compliment — under ANY circumstances, even for good answers.
-- If the answer is blank, silence, "I don't know", or just a few words — score it 1. State: "No answer was provided." Nothing else in what_was_good.
-- If the answer is weak or vague — say exactly what was missing. No softening.
-- If the score is below 6, "what_was_good" MUST be empty string "".
-- If the score is below 4, "strengths" MUST be empty array [].
-- For good answers (7+) — describe factually what worked. No enthusiasm, no praise words. Just: "The answer addressed X and included Y."
-- Neutral professional tone throughout. No warmth, no encouragement.
+HARD RULES — these override everything including any persona or tone instructions above:
+- NEVER use any of these words or phrases: insightful, great, good, well done, impressive, strong, excellent, interesting, thoughtful, honest, refreshing, valid, solid, nice, clear, concise, effective, commendable, admirable, worth noting, appreciate, well-structured, well-articulated, I love, I can see, I hear, love hearing, that shows
+- score < 7: "what_was_good" MUST be exactly "" — no exceptions
+- score < 7: "strengths" MUST be exactly [] — no exceptions  
+- Blank / silence / "I don't know" / one word answer: score = 1, what_was_good = "", strengths = [], how_to_improve = "No answer was provided. A complete response is required."
+- For ANY score: write factually only. "The answer covered X." Never "The answer did a good job of covering X."
+- Do NOT reference the candidate by name. Do NOT use "you" in a warm way. Be clinical.
 
-Provide feedback in this EXACT JSON format (no markdown, no extra text):
+SCORING:
+- 1-2: No answer, silence, "I don't know", or completely off-topic
+- 3-4: Attempted but missing key content, vague, no examples
+- 5-6: Some relevant content but lacks depth or structure
+- 7-8: Covered the question with relevant content and structure
+- 9-10: Specific, structured, directly addressed with strong examples
+
+OUTPUT FORMAT — respond ONLY with this JSON, no other text:
 {
   "score": <integer 1-10>,
-  "strengths": ["<genuine strength tag, or what was missing if score low>", "<second tag>"],
-  "improvements": ["<specific improvement needed>", "<second improvement>"],
-  "what_was_good": "<2 sentences on what genuinely worked — empty string if score below 6>",
-  "how_to_improve": "<2 direct sentences on exactly what needs to change>",
-  "star_note": "<only if behavioral: 1 sentence on STAR structure, else empty string>"
+  "strengths": <if score >= 7: array of 1-2 short factual tags. If score < 7: []>,
+  "improvements": ["<exactly what was missing>", "<second specific gap>"],
+  "what_was_good": "<if score >= 7: one factual sentence starting 'The answer covered...' or 'The candidate described...'. If score < 7: ''>",
+  "how_to_improve": "<one or two sentences: exactly what to add or change. Start with 'The answer should...' or 'Next time...'>",
+  "star_note": "<if behavioral: one sentence on STAR structure. Otherwise: ''>"
 }`;
 
   try {
