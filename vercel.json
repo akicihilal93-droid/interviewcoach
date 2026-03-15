@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/api/chat", "dest": "/api/chat.js" },
-    { "src": "/api/transcribe", "dest": "/api/transcribe.js" },
-    { "src": "/", "dest": "/landing.html" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
-}
