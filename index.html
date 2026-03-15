@@ -5,33 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script>
-(async function() {
-  const _sb = window.supabase.createClient(
+  window._supabaseClient = window.supabase.createClient(
     'https://nrcwvyqbbvxjlkuyhlpa.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk'
   );
-
-  // Wait for auth to initialize properly
-  const session = await new Promise((resolve) => {
-    const { data: { subscription } } = _sb.auth.onAuthStateChange((event, session) => {
-      subscription.unsubscribe();
-      resolve(session);
-    });
-    // Fallback after 3 seconds
-    setTimeout(async () => {
-      subscription.unsubscribe();
-      const { data } = await _sb.auth.getSession();
-      resolve(data.session);
-    }, 3000);
-  });
-
-  if (!session) { 
-    window.location.replace('https://www.acedit.it.com/auth.html'); 
-    return; 
-  }
-  window._supabaseClient = _sb;
-  window._supabaseSession = session;
-})();
 </script>
 <title>Interview Coach — AI-Powered Prep</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>

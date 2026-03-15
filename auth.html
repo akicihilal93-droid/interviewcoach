@@ -593,7 +593,7 @@ window.handleLogin = async function() {
     return;
   }
   showSuccess('✓ Welcome back! Redirecting...');
-  setTimeout(() => { window.location.replace('https://www.acedit.it.com/index.html'); }, 800);
+  setTimeout(() => { window.location.href = 'https://www.acedit.it.com/index.html'; }, 1500);
 }
 
 window.handleSignup = async function() {
