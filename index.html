@@ -600,8 +600,8 @@
 
     <div class="card" style="margin-bottom:16px;">
       <div class="field-group" style="margin-bottom:0;">
-        <label class="field-label">What's your preferred name? <em style="font-weight:400; color:var(--ink4);">(so your interviewer can address you properly)</em></label>
-        <input type="text" id="candidate-name" placeholder="e.g. Sarah, Alex, Jamie…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif;"/>
+        <label class="field-label">What's your preferred name? <em style="font-weight:400; color:var(--ink4);">(your interviewer will use this)</em></label>
+        <input type="text" id="candidate-name" placeholder="e.g. Sarah, Alex, Jamie…"/>
       </div>
     </div>
 
@@ -1003,6 +1003,7 @@ const state = {
   answers: [],
   feedbacks: [],
   scores: [],
+  exampleAnswers: [],
   currentQ: 0,
   totalQ: 5,
   cameraOn: false,
@@ -1288,7 +1289,7 @@ function goToOnboarding() {
 
 function goToWarmup() {
   state.goal = ($('goal-text') && $('goal-text').value) || '';
-  state.preferredName = ($('preferred-name') && $('preferred-name').value.trim()) || '';
+  state.candidateName = ($('candidate-name') && $('candidate-name').value.trim()) || '';
   state.feedbackPref = state.feedbackPref || 'after_each';
   setScreen('screen-interview');
   setStepIndicator('screen-interview');
@@ -1297,7 +1298,7 @@ function goToWarmup() {
 
 function goToInterview() {
   state.goal = ($('goal-text') && $('goal-text').value) || '';
-  state.preferredName = ($('preferred-name') && $('preferred-name').value.trim()) || '';
+  state.candidateName = ($('candidate-name') && $('candidate-name').value.trim()) || '';
   state.feedbackPref = state.feedbackPref || 'after_each';
   setScreen('screen-interview');
   setStepIndicator('screen-interview');
@@ -1835,6 +1836,7 @@ function initInterview() {
   state.answers = [];
   state.feedbacks = [];
   state.scores = [];
+  state.exampleAnswers = [];
 
   // Pre-fill first 3 as warmup questions — use preferred name if given
   const nameGreeting = state.candidateName ? `, ${state.candidateName}` : '';
@@ -1991,37 +1993,37 @@ Rules:
 }
 
 function typewriteQuestion(text, cb) {
-  // Store question text
-  $('question-text').textContent = text;
   $('question-loading').style.display = 'none';
-  $('question-text').style.display = 'none';
 
-  // Show speaking animation while AI talks
+  // Show text AND sound bars at the same time — text visible while voice plays
+  $('question-text').textContent = text;
+  $('question-text').style.display = 'block';
+  $('question-replay').style.display = 'block';
+
+  // Show sound bars animating alongside the text
   $('question-speaking').style.display = 'block';
-  $('speaking-label').textContent = 'Your interviewer is speaking…';
+  $('speaking-label').textContent = '🔊 Speaking…';
   document.querySelectorAll('.sound-bar').forEach(b => {
     b.style.animationPlayState = 'running';
     b.style.transform = '';
     b.style.opacity = '';
   });
 
+  // Show tip immediately too
+  const qType = state.questionTypes[state.currentQ];
+  const tips = {
+    warmup: '💡 Warm-up: Speak naturally — this is just to get you comfortable. No pressure.',
+    behavioral: '💡 Tip: Use the STAR method — briefly describe the Situation, your Task, the Action you took, and the Result. Keep it to 60–90 seconds.',
+    technical: '💡 Tip: Think out loud. State your approach first, then walk through it step by step. It\'s okay to ask a clarifying question.',
+    case: '💡 Tip: Structure your answer — state the problem, your framework, key assumptions, and your recommendation. 60–90 seconds.',
+    general: '💡 Tip: Be concise and specific. Aim for 30–60 seconds. Avoid vague answers — give a real example where you can.'
+  };
+  $('answer-tip').textContent = tips[qType] || tips.general;
+  $('answer-tip').style.display = 'block';
+
   speak(text, () => {
-    // After speaking: hide animation, reveal written question + tip
+    // After speaking: hide sound bars, show mic
     $('question-speaking').style.display = 'none';
-    $('question-text').style.display = 'block';
-    $('question-replay').style.display = 'block';
-    // Show tip based on question type
-    const qType = state.questionTypes[state.currentQ];
-    const tips = {
-      warmup: '💡 Warm-up: Speak naturally — this is just to get you comfortable. No pressure.',
-      behavioral: '💡 Tip: Use the STAR method — briefly describe the Situation, your Task, the Action you took, and the Result. Keep it to 60–90 seconds.',
-      technical: '💡 Tip: Think out loud. State your approach first, then walk through it step by step. It\'s okay to ask a clarifying question.',
-      case: '💡 Tip: Structure your answer — state the problem, your framework, key assumptions, and your recommendation. 60–90 seconds.',
-      general: '💡 Tip: Be concise and specific. Aim for 30–60 seconds. Avoid vague answers — give a real example where you can.'
-    };
-    const tip = tips[qType] || tips.general;
-    $('answer-tip').textContent = tip;
-    $('answer-tip').style.display = 'block';
     if (cb) cb();
   });
 }
@@ -2036,9 +2038,12 @@ function skipQuestion() {
 // Save answer and move to next without feedback (end_only mode)
 function saveAndNext() {
   const ans = ($('answer-input').value || '').trim();
-  state.answers[state.currentQ] = ans || '[No answer recorded]';
-  state.feedbacks[state.currentQ] = null;
-  state.scores[state.currentQ] = 0;
+  const qIdx = state.currentQ;
+  state.answers[qIdx] = ans || '[No answer recorded]';
+  state.feedbacks[qIdx] = null;
+  state.scores[qIdx] = 0;
+  // Always generate example answer silently in background
+  generateExampleAnswer(state.questions[qIdx], state.questionTypes[qIdx], qIdx);
   advanceQuestion();
 }
 
@@ -2124,6 +2129,17 @@ OUTPUT FORMAT — respond ONLY with this JSON, no other text:
     const raw = await callClaude(prompt);
     const clean = raw.replace(/```json|```/g,'').trim();
     const fb = JSON.parse(clean);
+
+    // Strip any praise words that slipped through
+    const PRAISE = /\b(insightful|great|good job|well done|impressive|excellent|interesting|thoughtful|honest(ly)?|refreshing|solid|nice|commendable|admirable|i (love|appreciate|liked)|that('s| is) (great|good|interesting|insightful)|love hearing)\b/gi;
+    const strip = s => s ? s.replace(PRAISE, '').replace(/\s{2,}/g,' ').trim() : s;
+    if (fb.what_was_good) fb.what_was_good = strip(fb.what_was_good);
+    if (fb.how_to_improve) fb.how_to_improve = strip(fb.how_to_improve);
+    if (fb.star_note) fb.star_note = strip(fb.star_note);
+    if (fb.strengths) fb.strengths = fb.strengths.map(strip);
+    if (fb.improvements) fb.improvements = fb.improvements.map(strip);
+    // If score < 7 and what_was_good somehow got filled, wipe it
+    if (fb.score < 7) { fb.what_was_good = ''; fb.strengths = []; }
     state.scores[state.currentQ] = fb.score;
     state.feedbacks[state.currentQ] = fb;
     renderInlineFeedback(fb);
@@ -2135,14 +2151,19 @@ OUTPUT FORMAT — respond ONLY with this JSON, no other text:
   if (btn) { btn.disabled = false; btn.innerHTML = 'Get feedback →'; }
 }
 
-async function generateExampleAnswer(question, qType) {
-  $('example-answer-text').innerHTML = '<span class="spinner"></span> Generating example…';
+async function generateExampleAnswer(question, qType, qIdx) {
+  const idx = qIdx !== undefined ? qIdx : state.currentQ;
+  const showInDOM = $('example-answer-text') && qIdx === undefined;
+
+  if (showInDOM) $('example-answer-text').innerHTML = '<span class="spinner"></span> Generating example…';
+
   const ctx = getContext();
   const formatGuide = {
     behavioral: 'Use the STAR format (Situation → Task → Action → Result). Be specific and concise.',
     technical: 'State your approach clearly, walk through your reasoning step by step.',
     case: 'Structure: restate the problem, share your framework, state key assumptions, give a clear recommendation.',
-    general: 'Be direct, specific and confident. Give a real example where relevant.'
+    general: 'Be direct, specific and confident. Give a real example where relevant.',
+    warmup: 'Be direct, specific and confident. Give a real example where relevant.'
   };
   const prompt = `You are an expert interview coach. Write a short example answer to this interview question.
 
@@ -2160,9 +2181,12 @@ Rules:
 
   try {
     const example = await callClaude(prompt);
-    $('example-answer-text').textContent = example.trim();
+    const text = example.trim();
+    if (!state.exampleAnswers) state.exampleAnswers = [];
+    state.exampleAnswers[idx] = text;
+    if (showInDOM) $('example-answer-text').textContent = text;
   } catch(e) {
-    $('example-answer-text').textContent = 'Could not generate example.';
+    if (showInDOM) $('example-answer-text').textContent = 'Could not generate example.';
   }
 }
 
@@ -2238,7 +2262,12 @@ async function endInterview() {
       </div>
       ${good ? `<div class="q-review-feedback" style="color:var(--green); margin-bottom:5px;">✅ ${good}</div>` : ''}
       ${improve ? `<div class="q-review-feedback" style="color:var(--amber);">💡 ${improve}</div>` : ''}
-      ${!skipped && !fb && state.answers[i] ? `<div class="q-review-feedback" style="color:var(--ink3); font-style:italic;">Answer saved — included in overall assessment.</div>` : ''}`;
+      ${!skipped && !fb && state.answers[i] ? `<div class="q-review-feedback" style="color:var(--ink3); font-style:italic;">Answer saved — included in overall assessment.</div>` : ''}
+      ${state.exampleAnswers && state.exampleAnswers[i] ? `
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--paper2);">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:6px;">📖 Example answer</div>
+          <div style="font-size:13px; line-height:1.7; color:var(--ink2); background:var(--paper2); border-radius:var(--radius-sm); padding:12px;">${state.exampleAnswers[i]}</div>
+        </div>` : ''}`;
     reviewList.appendChild(div);
   });
 
@@ -2363,24 +2392,24 @@ async function showQuestionsToAsk() {
   const ctx = getContext();
   const roundCfg = getActiveRoundConfig();
 
-  const prompt = `You are an expert career coach. Generate exactly 3 smart questions a candidate should ask their interviewer.
+  const prompt = `Generate exactly 3 questions a candidate should ask at the end of their interview.
 
 ${ctx}
-Interview round: ${roundCfg.label}
-Interviewer role: ${roundCfg.personaRole}
+Role: ${roundCfg.personaRole}
 
 Rules:
-- Exactly 3 questions — no more, no less
-- Make them specific to the job title, job description and resume provided — not generic
-- Each question should show genuine curiosity, strategic thinking or career interest
-- They should feel natural to ask at the end of an interview, not rehearsed
+- Exactly 3 questions
+- Short and natural — how a real person would ask them
+- Specific to the job title and description provided
+- One sentence each — no long-winded phrasing
+- Cover: (1) the role/day-to-day, (2) the team/culture, (3) growth/next steps
 
 Respond in JSON (no markdown):
 {
   "questions": [
-    { "q": "<the question to ask>", "why": "<one sentence on why this lands well>" },
-    { "q": "<question>", "why": "<why>" },
-    { "q": "<question>", "why": "<why>" }
+    { "q": "<question>", "why": "<why this lands well — max 10 words>" },
+    { "q": "<question>", "why": "<why — max 10 words>" },
+    { "q": "<question>", "why": "<why — max 10 words>" }
   ]
 }`;
 
