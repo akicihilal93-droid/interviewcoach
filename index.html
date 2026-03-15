@@ -780,12 +780,17 @@
     <h2>Quick warm-up</h2>
     <p class="subtitle">A few light questions to get you in the zone before the real interview begins.</p>
 
-    <div class="tip">🎙️ The AI will speak each question aloud. Hit the mic button to record your answer, or type if you prefer.</div>
+    <div class="tip">🔊 Make sure your volume is up! Tap the button below to hear the question, then record your answer.</div>
 
     <div class="card">
       <div class="chat-messages" id="warmup-chat"></div>
 
-      <!-- Voice only -->
+      <!-- Hear question button -->
+      <div id="warmup-hear-row" style="display:none; margin-bottom:12px;">
+        <button class="btn btn-ghost btn-sm" onclick="replayWarmupQuestion()" style="font-size:13px;">🔊 Replay question</button>
+      </div>
+
+      <!-- Voice row — always visible once question loads -->
       <div id="warmup-voice-row" style="display:none; align-items:center; gap:12px; margin-bottom:10px;">
         <button id="warmup-mic-btn" class="btn btn-primary" onclick="toggleWarmupMic()" style="min-width:160px;">🎙️ Tap to speak</button>
         <span id="warmup-rec-status" style="font-size:13px; color:var(--ink3);"></span>
@@ -852,6 +857,11 @@
 
       <!-- Written question — shown after speaking -->
       <div class="question-text" id="question-text" style="display:none;"></div>
+      <div id="question-replay" style="display:none; margin-bottom:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="speak($('question-text').textContent)" style="font-size:12px;">🔊 Replay question</button>
+      </div>
+      <!-- Answer tip -->
+      <div id="answer-tip" style="display:none; background:var(--blue-light); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; font-size:13px; color:var(--blue); line-height:1.6;"></div>
 
       <div class="answer-area" id="answer-area" style="display:none;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
@@ -859,7 +869,10 @@
           <span id="mic-status" style="font-size:13px; color:var(--ink3);"></span>
           <span id="mic-timer" style="font-size:14px; font-weight:500; color:var(--accent); margin-left:auto; display:none;"></span>
         </div>
-        <textarea id="answer-input" style="display:none;"></textarea>
+        <!-- Text fallback -->
+        <div style="margin-bottom:12px;">
+          <textarea id="answer-input" rows="4" placeholder="Can't use mic? Type your answer here instead…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical; line-height:1.6;" oninput="onAnswerInput()"></textarea>
+        </div>
         <div id="answer-actions" style="display:flex; justify-content:flex-end; gap:10px;">
           <button class="btn btn-primary" id="submit-answer-btn" onclick="submitAnswer()" style="display:none;">Get feedback →</button>
           <button class="btn btn-primary" id="next-only-btn" onclick="saveAndNext()" style="display:none;">Next question →</button>
@@ -876,6 +889,15 @@
         </div>
         <div class="feedback-chips" id="fb-tag-row"></div>
         <div class="feedback-body" id="fb-body"></div>
+
+        <!-- Example answer section -->
+        <div id="example-answer-area" style="margin-top:16px; border-top:1px solid var(--paper3); padding-top:16px;">
+          <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:8px;">📖 Example answer</div>
+          <div id="example-answer-text" style="font-size:14px; line-height:1.75; color:var(--ink2); background:var(--paper2); border-radius:var(--radius-sm); padding:14px;">
+            <span class="spinner"></span> Generating example…
+          </div>
+        </div>
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
           <button class="btn btn-ghost btn-sm" onclick="redoQuestion()">↩ Redo question</button>
           <button class="btn btn-primary" id="next-q-btn" onclick="nextQuestion()">Next question →</button>
@@ -915,6 +937,14 @@
       </div>
     </div>
 
+    <!-- Speech Analysis Card -->
+    <div class="card" id="speech-analysis-card" style="display:none; margin-bottom:24px;">
+      <h3 style="margin-bottom:12px;">🗣️ Speech Analysis</h3>
+      <div id="speech-analysis-content" style="font-size:14px; line-height:1.75; color:var(--ink2);">
+        <span class="spinner"></span> Analysing your delivery…
+      </div>
+    </div>
+
     <div class="report-section">
       <h3><span class="section-icon">✅</span> Strengths</h3>
       <div id="strengths-list" class="card"></div>
@@ -947,6 +977,27 @@
       </div>
       <div id="ats-expand-area" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--paper3); font-size:14px; line-height:1.75; color:var(--ink2);"></div>
       <button class="btn btn-sm" id="ats-detail-btn" onclick="loadAtsDetail()" style="margin-top:14px; display:none;">Tell me more →</button>
+    </div>
+
+    <!-- Questions to ask the interviewer — shown if avg score > 7.5 -->
+    <div class="card" id="questions-to-ask-card" style="display:none; margin-bottom:24px;">
+      <h3 style="margin-bottom:6px;">🙋 Questions to ask your interviewer</h3>
+      <p style="font-size:13px; color:var(--ink3); margin-bottom:16px;">You performed well! Here are smart, tailored questions to ask the person hiring you — showing genuine interest and strategic thinking.</p>
+      <div id="questions-to-ask-content">
+        <span class="spinner"></span> Generating your questions…
+      </div>
+    </div>
+
+    <!-- Offer to show questions if score > 7.5 -->
+    <div class="card" id="questions-offer-card" style="display:none; margin-bottom:24px; background:var(--accent-light); border-color:var(--accent2);">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="font-size:32px;">🌟</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:15px; margin-bottom:4px; color:var(--ink);">Great performance!</div>
+          <div style="font-size:13px; color:var(--ink2);">Would you like to know the ideal questions to ask the person hiring you? Asking the right questions leaves a lasting impression.</div>
+        </div>
+        <button class="btn btn-primary" onclick="showQuestionsToAsk()" style="flex-shrink:0;">Yes, show me →</button>
+      </div>
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
@@ -1340,12 +1391,22 @@ function addNaturalPauses(text) {
 
 let _cachedVoice = null;
 
+function sanitizeForSpeech(text) {
+  return text
+    .replace(/["""'']/g, '"')   // smart quotes → plain
+    .replace(/[—–]/g, ', ')     // em/en dash → pause
+    .replace(/\*/g, '')          // remove asterisks
+    .replace(/#+/g, '')          // remove markdown headers
+    .replace(/\s+/g, ' ')        // collapse whitespace
+    .trim();
+}
+
 function speak(text, onEnd) {
   if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
 
   const doSpeak = () => {
-    const utt = new SpeechSynthesisUtterance(addNaturalPauses(text));
+    const utt = new SpeechSynthesisUtterance(addNaturalPauses(sanitizeForSpeech(text)));
 
     // Pick best voice (cached after first load)
     if (!_cachedVoice) _cachedVoice = pickBestVoice(window.speechSynthesis.getVoices());
@@ -1381,6 +1442,7 @@ function speak(text, onEnd) {
 // ─── Audio Recording → Browser Speech Recognition ────────────────────
 let recognition = null;
 let intIsRecording = false;
+let isRecording = false;
 let intTranscript = '';
 let micTimerInterval = null;
 let micSeconds = 0;
@@ -1389,15 +1451,40 @@ function formatTime(s) {
   return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 }
 
+function onAnswerInput() {
+  const val = ($('answer-input').value || '').trim();
+  if (val.length > 3) {
+    if (state.feedbackPref === 'end_only') {
+      $('next-only-btn').style.display = 'inline-flex';
+      $('submit-answer-btn').style.display = 'none';
+    } else {
+      $('submit-answer-btn').style.display = 'inline-flex';
+      $('next-only-btn').style.display = 'none';
+    }
+  } else {
+    $('submit-answer-btn').style.display = 'none';
+    $('next-only-btn').style.display = 'none';
+  }
+}
+
 function toggleMic() {
   if (intIsRecording) stopIntMic();
   else startIntMic();
 }
 
-function startIntMic() {
+async function startIntMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    alert('Speech recognition not supported. Please use Chrome or Edge.');
+    alert('Speech recognition not supported. Please use Microsoft Edge or Chrome.');
+    return;
+  }
+
+  // Request mic permission explicitly first
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    $('mic-status').textContent = '⚠️ Microphone access denied. Please allow microphone and try again.';
+    $('mic-status').style.color = 'var(--red)';
     return;
   }
 
@@ -1409,7 +1496,7 @@ function startIntMic() {
   $('mic-btn').textContent = '⏹️ Stop recording';
   $('mic-btn').style.background = '#8b2020';
   $('mic-btn').style.borderColor = '#8b2020';
-  $('mic-status').textContent = '● Recording…';
+  $('mic-status').textContent = '● Recording… speak now';
   $('mic-status').style.color = '#8b2020';
   $('mic-timer').style.display = 'inline';
   $('mic-timer').textContent = '0:00';
@@ -1427,6 +1514,7 @@ function startIntMic() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = e => {
       let final = '', interim = '';
@@ -1446,10 +1534,16 @@ function startIntMic() {
 
     recognition.onerror = e => {
       if (e.error === 'no-speech') return;
+      if (e.error === 'not-allowed') {
+        $('mic-status').textContent = '⚠️ Microphone blocked. Click the 🔒 icon in your browser address bar and allow microphone.';
+        $('mic-status').style.color = 'var(--red)';
+        intIsRecording = false;
+        clearInterval(micTimerInterval);
+      }
       console.error('Speech recognition error:', e.error);
     };
 
-    recognition.start();
+    try { recognition.start(); } catch(e) { console.error('Failed to start recognition:', e); }
   }
 
   startRec();
@@ -1495,19 +1589,24 @@ const warmupQuestions = [
   "If you had to describe your biggest interview challenge in one sentence, what would it be?"
 ];
 
+let currentWarmupQuestion = '';
+
 function initWarmup() {
   $('warmup-chat').innerHTML = '';
   state.warmupMessages = [];
   state.warmupCount = 0;
-  // Speak and display the first question
+  currentWarmupQuestion = warmupQuestions[0];
   addChatMsg('ai', warmupQuestions[0]);
   state.warmupMessages.push({ role: 'assistant', content: warmupQuestions[0] });
-  // Delay speak so voices are loaded
-  setTimeout(() => {
-    speak(warmupQuestions[0], () => {
-      $('warmup-voice-row').style.display = 'flex';
-    });
-  }, 400);
+  // Show mic and replay button immediately — don't wait for speech
+  $('warmup-voice-row').style.display = 'flex';
+  $('warmup-hear-row').style.display = 'block';
+  // Try to speak — may be blocked on mobile until user interaction
+  setTimeout(() => speak(warmupQuestions[0]), 400);
+}
+
+function replayWarmupQuestion() {
+  speak(currentWarmupQuestion);
 }
 
 function addChatMsg(who, text) {
@@ -1522,26 +1621,38 @@ function addChatMsg(who, text) {
 
 let warmupRecognition = null;
 let warmupTranscript = '';
+let warmupIsRecording = false;
 
 function toggleWarmupMic() {
-  if (isRecording) {
+  if (warmupIsRecording) {
     stopWarmupMic(true);
   } else {
     startWarmupMic();
   }
 }
 
-function startWarmupMic() {
-  if (!createRecognition()) {
-    alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+async function startWarmupMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Speech recognition is not supported. Please use Microsoft Edge or Chrome.');
     return;
   }
+
+  // Request mic permission explicitly first
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    $('warmup-rec-status').textContent = '⚠️ Microphone blocked. Click the 🔒 icon in your address bar and allow microphone.';
+    $('warmup-rec-status').style.color = 'var(--red)';
+    return;
+  }
+
   warmupTranscript = '';
-  isRecording = true;
+  warmupIsRecording = true;
   $('warmup-mic-btn').textContent = '⏹️ Stop recording';
   $('warmup-mic-btn').style.background = '#8b2020';
   $('warmup-mic-btn').style.borderColor = '#8b2020';
-  $('warmup-rec-status').textContent = '● Recording…';
+  $('warmup-rec-status').textContent = '● Recording… speak now';
   $('warmup-rec-status').style.color = '#8b2020';
   $('warmup-input').value = '';
 
@@ -1556,9 +1667,9 @@ function startWarmupMic() {
       $('warmup-input').value = warmupTranscript + (interim ? ' ' + interim : '');
     };
     r.onend = () => {
-      if (isRecording) {
+      if (warmupIsRecording) {
         try {
-          warmupRecognition = createRecognition();
+          warmupRecognition = new SR();
           attachWarmupHandlers(warmupRecognition);
           warmupRecognition.start();
         } catch(e) {}
@@ -1566,17 +1677,21 @@ function startWarmupMic() {
     };
     r.onerror = e => {
       if (e.error === 'no-speech') return;
-      stopWarmupMic(false);
+      if (e.error === 'not-allowed') {
+        $('warmup-rec-status').textContent = '⚠️ Microphone blocked. Allow microphone access in your browser.';
+        $('warmup-rec-status').style.color = 'var(--red)';
+        warmupIsRecording = false;
+      }
     };
   }
 
-  warmupRecognition = createRecognition();
+  warmupRecognition = new SR();
   attachWarmupHandlers(warmupRecognition);
-  warmupRecognition.start();
+  try { warmupRecognition.start(); } catch(e) { console.error(e); }
 }
 
 function stopWarmupMic(send) {
-  isRecording = false;
+  warmupIsRecording = false;
   if (warmupRecognition) { try { warmupRecognition.stop(); } catch(e){} warmupRecognition = null; }
   $('warmup-mic-btn').textContent = '🎙️ Speak answer';
   $('warmup-mic-btn').style.background = '';
@@ -1606,9 +1721,12 @@ function sendWarmup() {
     $('warmup-voice-row').style.display = 'none';
     setTimeout(() => {
       const nextQ = warmupQuestions[state.warmupCount];
+      currentWarmupQuestion = nextQ;
       addChatMsg('ai', nextQ);
       state.warmupMessages.push({ role: 'assistant', content: nextQ });
-      speak(nextQ, () => { $('warmup-voice-row').style.display = 'flex'; });
+      speak(nextQ);
+      $('warmup-voice-row').style.display = 'flex';
+      $('warmup-hear-row').style.display = 'block';
     }, 600);
   }
 }
@@ -1769,6 +1887,9 @@ async function loadQuestion() {
   $('question-speaking').style.display = 'none';
   $('question-text').style.display = 'none';
   $('question-text').textContent = '';
+  $('question-replay').style.display = 'none';
+  $('answer-tip').style.display = 'none';
+  $('answer-tip').textContent = '';
   $('answer-area').style.display = 'none';
   $('feedback-inline-area').style.display = 'none';
   $('answer-input').value = '';
@@ -1819,8 +1940,18 @@ Rules:
     });
   } catch(e) {
     console.error('loadQuestion error:', e);
-    $('question-loading').innerHTML = `<span style="color:var(--red); font-size:14px;">⚠️ ${e.message || 'Error loading question. Please try again.'}</span>
-      <br><button class="btn btn-sm" style="margin-top:12px;" onclick="loadQuestion()">Try again</button>`;
+    // If it's a speech error, still show the question
+    if (e instanceof SyntaxError) {
+      const q = state.questions[qIdx] || 'Could not load question. Please try again.';
+      $('question-loading').style.display = 'none';
+      $('question-text').style.display = 'block';
+      $('question-text').textContent = q;
+      $('question-replay').style.display = 'block';
+      $('answer-area').style.display = 'block';
+    } else {
+      $('question-loading').innerHTML = `<span style="color:var(--red); font-size:14px;">⚠️ ${e.message || 'Error loading question.'}</span>
+        <br><button class="btn btn-sm" style="margin-top:12px;" onclick="loadQuestion()">Try again</button>`;
+    }
   }
 }
 
@@ -1840,9 +1971,21 @@ function typewriteQuestion(text, cb) {
   });
 
   speak(text, () => {
-    // After speaking: hide animation, reveal written question
+    // After speaking: hide animation, reveal written question + tip
     $('question-speaking').style.display = 'none';
     $('question-text').style.display = 'block';
+    $('question-replay').style.display = 'block';
+    // Show tip based on question type
+    const qType = state.questionTypes[state.currentQ];
+    const tips = {
+      behavioral: '💡 Tip: Use the STAR method — briefly describe the Situation, your Task, the Action you took, and the Result. Keep it to 60–90 seconds.',
+      technical: '💡 Tip: Think out loud. State your approach first, then walk through it step by step. It\'s okay to ask a clarifying question.',
+      case: '💡 Tip: Structure your answer — state the problem, your framework, key assumptions, and your recommendation. 60–90 seconds.',
+      general: '💡 Tip: Be concise and specific. Aim for 30–60 seconds. Avoid vague answers — give a real example where you can.'
+    };
+    const tip = tips[qType] || tips.general;
+    $('answer-tip').textContent = tip;
+    $('answer-tip').style.display = 'block';
     if (cb) cb();
   });
 }
@@ -1931,11 +2074,43 @@ Provide feedback in this EXACT JSON format (no markdown, no extra text):
     state.scores[state.currentQ] = fb.score;
     state.feedbacks[state.currentQ] = fb;
     renderInlineFeedback(fb);
+    generateExampleAnswer(state.questions[state.currentQ], state.questionTypes[state.currentQ]);
   } catch(e) {
     $('fb-body').innerHTML = '<em>Could not parse feedback. Please try again.</em>';
     $('next-q-btn').disabled = false;
   }
   if (btn) { btn.disabled = false; btn.innerHTML = 'Get feedback →'; }
+}
+
+async function generateExampleAnswer(question, qType) {
+  $('example-answer-text').innerHTML = '<span class="spinner"></span> Generating example…';
+  const ctx = getContext();
+  const formatGuide = {
+    behavioral: 'Use the STAR format (Situation → Task → Action → Result). Be specific and concise.',
+    technical: 'State your approach clearly, walk through your reasoning step by step.',
+    case: 'Structure: restate the problem, share your framework, state key assumptions, give a clear recommendation.',
+    general: 'Be direct, specific and confident. Give a real example where relevant.'
+  };
+  const prompt = `You are an expert interview coach. Write a short example answer to this interview question.
+
+Question: ${question}
+Question type: ${qType}
+Format to use: ${formatGuide[qType] || formatGuide.general}
+${ctx}
+
+Rules:
+- Write a realistic, impressive but natural-sounding example answer
+- Use a plausible fictional scenario (not the candidate's real background)
+- Keep it to 3-5 sentences maximum — concise and punchy
+- Show the correct format/structure clearly
+- Do NOT add any preamble — just the example answer itself`;
+
+  try {
+    const example = await callClaude(prompt);
+    $('example-answer-text').textContent = example.trim();
+  } catch(e) {
+    $('example-answer-text').textContent = 'Could not generate example.';
+  }
 }
 
 function renderInlineFeedback(fb) {
@@ -2050,6 +2225,131 @@ Provide a JSON response (no markdown) with:
   if (state.resumeText || state.resumeFileData) {
     $('ats-card').style.display = 'block';
     loadAtsScore();
+  }
+
+  // Speech analysis
+  const answeredTranscripts = state.answers.filter(a => a && a !== '[Skipped]' && a !== '[No answer recorded]');
+  if (answeredTranscripts.length > 0) {
+    $('speech-analysis-card').style.display = 'block';
+    loadSpeechAnalysis(answeredTranscripts);
+  }
+
+  // Questions to ask — show offer if avg score > 7.5
+  const avgScore = answered > 0 ? state.scores.filter(s=>s>0).reduce((a,b)=>a+b,0)/answered : 0;
+  if (avgScore >= 7.5) {
+    $('questions-offer-card').style.display = 'block';
+  }
+}
+
+async function loadSpeechAnalysis(transcripts) {
+  const combined = transcripts.join('\n\n');
+
+  const prompt = `You are an expert speech and communication coach. Analyse these interview answers for delivery quality.
+
+Answers:
+${combined}
+
+Look for:
+1. PACE: Are answers too long (rambling/slow) or too short (rushed)? Ideal is 60-90 seconds per answer.
+2. REPETITION: Are certain words or phrases repeated too often? (e.g. "basically", "you know", "I think", "um")
+3. STRUCTURE: Are answers well-structured or all over the place?
+4. CONFIDENCE: Does the language sound confident or hesitant?
+
+Respond in JSON (no markdown):
+{
+  "pace": "<one sentence on whether they spoke too fast, too slow, or about right>",
+  "pace_rating": "<Too fast | Too slow | Good pace>",
+  "repetition": "<one sentence on any repeated words or filler phrases noticed>",
+  "repetition_rating": "<Repetitive | Occasionally repetitive | Varied>",
+  "structure": "<one sentence on answer structure>",
+  "structure_rating": "<Needs work | Reasonable | Well structured>",
+  "confidence": "<one sentence on how confident they sounded>",
+  "confidence_rating": "<Hesitant | Moderate | Confident>",
+  "top_tip": "<one actionable sentence they should focus on most>"
+}`;
+
+  try {
+    const raw = await callClaude(prompt);
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const analysis = JSON.parse(clean);
+
+    const ratingColor = r => {
+      if (/good|well|confident|varied/i.test(r)) return 'var(--green)';
+      if (/moderate|reasonable|occasionally/i.test(r)) return 'var(--amber)';
+      return 'var(--red)';
+    };
+
+    $('speech-analysis-content').innerHTML = `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="background:var(--paper2); border-radius:var(--radius-sm); padding:12px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:4px;">Pace</div>
+          <div style="font-weight:500; color:${ratingColor(analysis.pace_rating)}; margin-bottom:4px;">${analysis.pace_rating}</div>
+          <div style="font-size:13px; color:var(--ink2);">${analysis.pace}</div>
+        </div>
+        <div style="background:var(--paper2); border-radius:var(--radius-sm); padding:12px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:4px;">Repetition</div>
+          <div style="font-weight:500; color:${ratingColor(analysis.repetition_rating)}; margin-bottom:4px;">${analysis.repetition_rating}</div>
+          <div style="font-size:13px; color:var(--ink2);">${analysis.repetition}</div>
+        </div>
+        <div style="background:var(--paper2); border-radius:var(--radius-sm); padding:12px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:4px;">Structure</div>
+          <div style="font-weight:500; color:${ratingColor(analysis.structure_rating)}; margin-bottom:4px;">${analysis.structure_rating}</div>
+          <div style="font-size:13px; color:var(--ink2);">${analysis.structure}</div>
+        </div>
+        <div style="background:var(--paper2); border-radius:var(--radius-sm); padding:12px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink3); margin-bottom:4px;">Confidence</div>
+          <div style="font-weight:500; color:${ratingColor(analysis.confidence_rating)}; margin-bottom:4px;">${analysis.confidence_rating}</div>
+          <div style="font-size:13px; color:var(--ink2);">${analysis.confidence}</div>
+        </div>
+      </div>
+      <div style="background:var(--amber-light); border-radius:var(--radius-sm); padding:12px; font-size:14px; color:var(--amber);">
+        <strong>Top tip:</strong> ${analysis.top_tip}
+      </div>`;
+  } catch(e) {
+    $('speech-analysis-content').textContent = 'Could not analyse speech delivery.';
+  }
+}
+
+async function showQuestionsToAsk() {
+  $('questions-offer-card').style.display = 'none';
+  $('questions-to-ask-card').style.display = 'block';
+
+  const ctx = getContext();
+  const roundCfg = getActiveRoundConfig();
+
+  const prompt = `You are an expert career coach. Generate tailored questions a candidate should ask their interviewer.
+
+${ctx}
+Interview round: ${roundCfg.label}
+Interviewer role: ${roundCfg.personaRole}
+
+Generate 6 smart, specific questions the candidate should ask. Make them relevant to the role, company and round. 
+They should show curiosity, strategic thinking and genuine interest — not generic questions.
+
+Respond in JSON (no markdown):
+{
+  "questions": [
+    { "q": "<the question to ask>", "why": "<one short sentence on why this question impresses>" },
+    { "q": "<question>", "why": "<why>" },
+    { "q": "<question>", "why": "<why>" },
+    { "q": "<question>", "why": "<why>" },
+    { "q": "<question>", "why": "<why>" },
+    { "q": "<question>", "why": "<why>" }
+  ]
+}`;
+
+  try {
+    const raw = await callClaude(prompt);
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const data = JSON.parse(clean);
+
+    $('questions-to-ask-content').innerHTML = data.questions.map((item, i) => `
+      <div style="padding:14px 0; border-bottom:1px solid var(--paper2); ${i === data.questions.length-1 ? 'border-bottom:none;' : ''}">
+        <div style="font-size:15px; font-weight:500; color:var(--ink); margin-bottom:5px;">${i+1}. "${item.q}"</div>
+        <div style="font-size:13px; color:var(--ink3);">💡 ${item.why}</div>
+      </div>`).join('');
+  } catch(e) {
+    $('questions-to-ask-content').textContent = 'Could not generate questions.';
   }
 }
 
