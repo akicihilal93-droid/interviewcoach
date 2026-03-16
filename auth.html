@@ -506,27 +506,32 @@ body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;f
 
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://nrcwvyqbbvxjlkuyhlpa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabase = null;
 
-// Check if already logged in — redirect to app
-async function initAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) { window.location.replace('https://www.acedit.it.com/onboarding.html'); return; }
-}
-initAuth();
-
-// Listen for OAuth redirect only
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session && !window._redirecting) {
-    window._redirecting = true;
-    window.location.href = 'https://www.acedit.it.com/onboarding.html';
-  }
-});
-
+// Load Supabase without blocking the page
+const sbScript = document.createElement('script');
+sbScript.src = 'https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js';
+sbScript.onload = () => {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // Check if already logged in
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session && !window._redirecting) {
+      window._redirecting = true;
+      window.location.href = 'https://www.acedit.it.com/onboarding.html';
+    }
+  });
+  // Listen for OAuth redirect
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session && !window._redirecting) {
+      window._redirecting = true;
+      window.location.href = 'https://www.acedit.it.com/onboarding.html';
+    }
+  });
+};
+document.head.appendChild(sbScript);
 window.switchTab = function(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
@@ -580,6 +585,7 @@ window.checkStrength = function(val) {
 
 window.handleLogin = async function() {
   hideAlerts();
+  if (!supabase) { showError('Still loading — please try again in a moment.'); return; }
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
@@ -602,6 +608,7 @@ window.handleLogin = async function() {
 
 window.handleSignup = async function() {
   hideAlerts();
+  if (!supabase) { showError('Still loading — please try again in a moment.'); return; }
   const first = document.getElementById('signup-first').value.trim();
   const last = document.getElementById('signup-last').value.trim();
   const email = document.getElementById('signup-email').value.trim();

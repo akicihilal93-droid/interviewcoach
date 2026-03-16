@@ -1790,12 +1790,6 @@ function updateDots() {
   }
 }
 
-function goToInterview() {
-  setScreen('screen-interview');
-  setStepIndicator('screen-interview');
-  initInterview();
-}
-
 function getActiveRoundConfig() {
   if (state.round === 'full') {
     const roundKey = FULL_JOURNEY_ROUNDS[state.currentRoundIdx] || 'general';
