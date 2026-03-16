@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script>
   window._supabaseClient = window.supabase.createClient(
@@ -602,118 +605,35 @@
 
   <!-- ═══ SCREEN 1: Upload ═══ -->
   <!-- ═══ SCREEN 1b: Round Selection ═══ -->
+  <!-- ═══ SCREEN 1: A little about you ═══ -->
   <div id="screen-round" class="screen active">
-    <h2>What type of interview<br>are you practising?</h2>
-    <p class="subtitle">We'll set the interviewer tone, style and question types to match exactly where you are in the process.</p>
-
-    <div style="display:grid; gap:12px; margin-bottom:28px;">
-
-      <div class="round-card" onclick="selectRound('full')" data-round="full">
-        <div class="round-icon">🗺️</div>
-        <div class="round-info">
-          <div class="round-title">Full Journey / General Practice <span style="font-size:11px; background:var(--accent-light); color:var(--accent); padding:2px 8px; border-radius:10px; margin-left:6px; font-weight:500;">Recommended</span></div>
-          <div class="round-desc">Not sure where to start? This covers everything — mixed questions across all types and rounds, building your confidence from the ground up. Great for general practice or if you want the full interview experience.</div>
-        </div>
-      </div>
-
-      <div class="round-card" onclick="selectRound('hr')" data-round="hr">
-        <div class="round-icon">👋</div>
-        <div class="round-info">
-          <div class="round-title">1st Round — HR Screen</div>
-          <div class="round-desc">Friendly HR interviewer. Culture fit, motivations, salary expectations, basic background check. Warm but professional tone.</div>
-        </div>
-      </div>
-
-      <div class="round-card" onclick="selectRound('hiring')" data-round="hiring">
-        <div class="round-icon">💼</div>
-        <div class="round-info">
-          <div class="round-title">2nd Round — Hiring Manager</div>
-          <div class="round-desc">Direct and experienced. Deep dive into your work history, competencies and how you'd perform in the role. Expects specifics.</div>
-        </div>
-      </div>
-
-      <div class="round-card" onclick="selectRound('technical')" data-round="technical">
-        <div class="round-icon">🔬</div>
-        <div class="round-info">
-          <div class="round-title">3rd Round — Technical / Case</div>
-          <div class="round-desc">Tough and detailed. Technical problem solving, case studies, and role-specific challenges. No fluff — prove your expertise.</div>
-        </div>
-      </div>
-
-      <div class="round-card" onclick="selectRound('exec')" data-round="exec">
-        <div class="round-icon">🏆</div>
-        <div class="round-info">
-          <div class="round-title">Final Round — Executive / Panel</div>
-          <div class="round-desc">Senior stakeholders. Strategic thinking, leadership, vision and cultural alignment. High stakes, high expectations.</div>
-        </div>
-      </div>
-
-    </div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="window.location.href='onboarding.html'">← Back</button>
-      <button class="btn btn-primary" id="round-continue-btn" onclick="goToResume()" disabled>Continue →</button>
-    </div>
-  </div>
-
-  <!-- ═══ SCREEN 1c: Resume Upload ═══ -->
-  <div id="screen-resume" class="screen">
-    <h2>Upload your resume</h2>
-    <p class="subtitle">Optional — but the more context the AI has, the more tailored your questions will be.</p>
-
-    <div class="card">
-      <h3 style="margin-bottom:4px;">📄 Resume <span style="font-size:12px; font-weight:400; color:var(--ink4);">(optional)</span></h3>
-      <p style="font-size:12px; color:var(--ink4); margin-bottom:14px;">Helps the AI ask questions based on your actual experience.</p>
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
-        <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
-      </div>
-
-      <div id="res-upload-area">
-        <div class="upload-zone">
-          <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
-          <div class="upload-icon">📎</div>
-          <p><strong>Click to upload</strong> or drag & drop</p>
-          <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
-        </div>
-        <div id="resume-file-preview"></div>
-      </div>
-
-      <div id="res-paste-area" style="display:none;">
-        <textarea id="resume-text" rows="6" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
-      </div>
-    </div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-      <button class="btn btn-ghost" onclick="goBack('screen-round')">← Back</button>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button onclick="goToOnboarding()" style="background:none; border:none; font-size:13px; color:var(--ink3); cursor:pointer; font-family:'DM Sans',sans-serif; padding:10px 0;">Skip →</button>
-        <button onclick="goToOnboarding()" style="background:var(--accent); color:white; border:none; padding:11px 26px; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif;">Continue →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ SCREEN 2: Onboarding Assessment ═══ -->
-  <div id="screen-onboarding" class="screen">
-    <h2>A few quick questions</h2>
+    <h2>A little about <em>you.</em></h2>
     <p class="subtitle">Help the AI personalise your session and focus on what matters most to you.</p>
 
     <div class="card">
 
       <div class="field-group">
-        <label class="field-label">Interview type preference</label>
-        <div class="chips" id="int-type-chips">
-          <div class="chip selected" onclick="toggleMultiChip('intType',this,'general')">General mix</div>
-          <div class="chip" onclick="toggleMultiChip('intType',this,'behavioral')">Behavioural / STAR</div>
-          <div class="chip" onclick="toggleMultiChip('intType',this,'technical')">Technical</div>
-          <div class="chip" onclick="toggleMultiChip('intType',this,'case')">Case study</div>
-          <div class="chip" onclick="toggleMultiChip('intType',this,'hr')">HR / culture fit</div>
+        <label class="field-label">📄 Resume <span style="font-weight:400; text-transform:none; color:var(--ink4);">(optional — helps tailor questions)</span></label>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
+          <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
+        </div>
+        <div id="res-upload-area">
+          <div class="upload-zone">
+            <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
+            <div class="upload-icon">📎</div>
+            <p><strong>Click to upload</strong> or drag & drop</p>
+            <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
+          </div>
+          <div id="resume-file-preview"></div>
+        </div>
+        <div id="res-paste-area" style="display:none;">
+          <textarea id="resume-text" rows="5" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
         </div>
       </div>
 
       <div class="field-group">
-        <label class="field-label">How confident do you feel about this interview?</label>
+        <label class="field-label">How confident do you feel?</label>
         <div class="slider-wrap">
           <input type="range" id="confidence-slider" min="1" max="5" value="3" oninput="updateConfidence(this)"/>
           <div class="slider-labels">
@@ -725,7 +645,7 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label">What areas do you want to improve? <em style="font-weight:400; color:var(--ink4)">(select all that apply)</em></label>
+        <label class="field-label">Areas to improve <em style="font-weight:400; color:var(--ink4)">(select all that apply)</em></label>
         <div class="chips" id="improve-chips">
           <div class="chip" onclick="toggleMultiChip('improve',this,'behavioral')">Behavioural / STAR</div>
           <div class="chip" onclick="toggleMultiChip('improve',this,'technical')">Technical depth</div>
@@ -746,18 +666,38 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label">Your main goal for today's session <em style="font-weight:400; color:var(--ink4);">(optional)</em></label>
-        <textarea id="goal-text" rows="2" placeholder="e.g. I want to practice telling my work stories more concisely… (leave blank to skip)"></textarea>
+        <label class="field-label">Your goal for today's session <em style="font-weight:400; color:var(--ink4);">(optional)</em></label>
+        <textarea id="goal-text" rows="2" placeholder="e.g. Practice telling stories more concisely… (leave blank to skip)"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">📄 Attach resume <em style="font-weight:400; color:var(--ink4); text-transform:none;">(optional — tailors questions to your experience)</em></label>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
+          <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
+        </div>
+        <div id="res-upload-area">
+          <div class="upload-zone">
+            <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
+            <div class="upload-icon">📎</div>
+            <p><strong>Click to upload</strong> or drag & drop</p>
+            <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
+          </div>
+          <div id="resume-file-preview"></div>
+        </div>
+        <div id="res-paste-area" style="display:none;">
+          <textarea id="resume-text" rows="5" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
+        </div>
       </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="goBack('screen-resume')">← Back</button>
-      <button class="btn btn-primary" onclick="goToInterview()">Continue →</button>
+      <button class="btn btn-ghost" onclick="window.location.href='onboarding.html'">← Back</button>
+      <button class="btn btn-primary" onclick="goToInterview()">Start interview →</button>
     </div>
   </div>
 
-  <!-- ═══ SCREEN 4: Mock Interview ═══ -->
+  <!-- ═══ SCREEN 2: Mock Interview ═══ -->
   <div id="screen-interview" class="screen">
 
     <!-- Persona bar -->
@@ -994,10 +934,10 @@ function setScreen(id) {
 }
 const stepMap = {
   'screen-apikey':    '',
-  'screen-round':     'Step 1 of 4',
-  'screen-resume':    'Step 2 of 4',
-  'screen-onboarding':'Step 3 of 4',
-  'screen-interview': 'Step 4 of 4',
+  'screen-round':     'Step 1 of 2',
+  'screen-onboarding':'Step 1 of 2',
+  'screen-resume':    'Step 1 of 2',
+  'screen-interview': 'Step 2 of 2',
   'screen-report':    'Step 5 of 5'
 };
 function setStepIndicator(screenId) {
@@ -1254,13 +1194,13 @@ function updateConfidence(el) {
 function goBack(screenId) { setScreen(screenId); setStepIndicator(screenId); }
 
 function goToResume() {
-  setScreen('screen-resume');
-  setStepIndicator('screen-resume');
+  setScreen('screen-round');
+  setStepIndicator('screen-round');
 }
 
 function goToOnboarding() {
-  setScreen('screen-onboarding');
-  setStepIndicator('screen-onboarding');
+  setScreen('screen-round');
+  setStepIndicator('screen-round');
 }
 
 function goToWarmup() {
@@ -1275,6 +1215,12 @@ function goToWarmup() {
 function goToInterview() {
   state.goal = ($('goal-text') && $('goal-text').value) || '';
   state.candidateName = ($('candidate-name') && $('candidate-name').value.trim()) || '';
+  state.feedbackPref = state.feedbackPref || 'end_only';
+  state.round = state.round || 'full'; // default to full journey
+  setScreen('screen-interview');
+  setStepIndicator('screen-interview');
+  initInterview();
+}
   state.feedbackPref = state.feedbackPref || 'after_each';
   setScreen('screen-interview');
   setStepIndicator('screen-interview');
