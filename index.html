@@ -603,34 +603,13 @@
     </div>
   </div>
 
-  <!-- ═══ SCREEN 1: Upload ═══ -->
-  <!-- ═══ SCREEN 1b: Round Selection ═══ -->
+
   <!-- ═══ SCREEN 1: A little about you ═══ -->
   <div id="screen-round" class="screen active">
     <h2>A little about <em>you.</em></h2>
-    <p class="subtitle">Help the AI personalise your session and focus on what matters most to you.</p>
+    <p class="subtitle">All optional — skip anything and jump straight in.</p>
 
     <div class="card">
-
-      <div class="field-group">
-        <label class="field-label">📄 Resume <span style="font-weight:400; text-transform:none; color:var(--ink4);">(optional — helps tailor questions)</span></label>
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
-          <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
-        </div>
-        <div id="res-upload-area">
-          <div class="upload-zone">
-            <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
-            <div class="upload-icon">📎</div>
-            <p><strong>Click to upload</strong> or drag & drop</p>
-            <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
-          </div>
-          <div id="resume-file-preview"></div>
-        </div>
-        <div id="res-paste-area" style="display:none;">
-          <textarea id="resume-text" rows="5" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
-        </div>
-      </div>
 
       <div class="field-group">
         <label class="field-label">How confident do you feel?</label>
@@ -659,10 +638,10 @@
       <div class="field-group">
         <label class="field-label">When would you like feedback?</label>
         <div class="chips" id="feedbackPref-chips">
-          <div class="chip" onclick="selectChip('feedbackPref',this,'after_each')">After each question</div>
-          <div class="chip selected" onclick="selectChip('feedbackPref',this,'end_only')">At the end only</div>
+          <div class="chip selected" onclick="selectChip('feedbackPref',this,'after_each')">After each question</div>
+          <div class="chip" onclick="selectChip('feedbackPref',this,'end_only')">At the end only</div>
         </div>
-        <p style="font-size:12px; color:var(--ink4); margin-top:8px;" id="feedback-pref-desc">Answer all questions without interruption. Full detailed feedback at the end only.</p>
+        <p style="font-size:12px; color:var(--ink4); margin-top:8px;" id="feedback-pref-desc">You'll get scored feedback after every answer, plus a full report at the end.</p>
       </div>
 
       <div class="field-group">
@@ -689,9 +668,10 @@
           <textarea id="resume-text" rows="5" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
         </div>
       </div>
+
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
       <button class="btn btn-ghost" onclick="window.location.href='onboarding.html'">← Back</button>
       <button class="btn btn-primary" onclick="goToInterview()">Start interview →</button>
     </div>
@@ -890,7 +870,7 @@ const state = {
   apiKey: '',
   openaiKey: '',
   candidateName: '',
-  feedbackPref: 'end_only', // after_each | end_only
+  feedbackPref: 'after_each',
   round: '',           // hr | hiring | technical | exec | full | general
   currentRoundIdx: 0, // for full journey
   resumeFile: null,
@@ -1215,14 +1195,12 @@ function goToWarmup() {
 function goToInterview() {
   state.goal = ($('goal-text') && $('goal-text').value) || '';
   state.candidateName = ($('candidate-name') && $('candidate-name').value.trim()) || '';
-  state.feedbackPref = state.feedbackPref || 'end_only';
-  state.round = state.round || 'full'; // default to full journey
+  state.feedbackPref = state.feedbackPref || 'after_each';
+  state.round = state.round || 'full';
   setScreen('screen-interview');
   setStepIndicator('screen-interview');
   initInterview();
 }
-  state.feedbackPref = state.feedbackPref || 'after_each';
-  setScreen('screen-interview');
   setStepIndicator('screen-interview');
   initInterview();
 }
