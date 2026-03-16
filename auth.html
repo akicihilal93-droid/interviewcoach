@@ -509,29 +509,35 @@ body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;f
 <script>
 const SUPABASE_URL = 'https://nrcwvyqbbvxjlkuyhlpa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk';
-let supabase = null;
+const REDIRECT = 'https://www.acedit.it.com/onboarding.html';
 
-// Load Supabase without blocking the page
-const sbScript = document.createElement('script');
-sbScript.src = 'https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js';
-sbScript.onload = () => {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  // Check if already logged in
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session && !window._redirecting) {
-      window._redirecting = true;
-      window.location.href = 'https://www.acedit.it.com/onboarding.html';
-    }
+async function sbSignIn(email, password) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email, password })
   });
-  // Listen for OAuth redirect
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session && !window._redirecting) {
-      window._redirecting = true;
-      window.location.href = 'https://www.acedit.it.com/onboarding.html';
-    }
+  return r.json();
+}
+
+async function sbSignUp(email, password, meta) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email, password, data: meta })
   });
-};
-document.head.appendChild(sbScript);
+  return r.json();
+}
+
+async function sbResetPassword(email) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email })
+  });
+  return r.json();
+}
+
 window.switchTab = function(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
@@ -540,10 +546,10 @@ window.switchTab = function(tab) {
   hideAlerts();
   if (tab === 'login') {
     document.getElementById('auth-title').textContent = 'Welcome back';
-    document.getElementById('auth-subtitle').innerHTML = "Don't have an account? <a href='#' onclick='switchTab(\"signup\"); return false;'>Sign up free →</a>";
+    document.getElementById('auth-subtitle').innerHTML = "Don't have an account? <a href='#' onclick='switchTab(\"signup\"); return false;'>Sign up free \u2192</a>";
   } else {
     document.getElementById('auth-title').textContent = 'Start for free';
-    document.getElementById('auth-subtitle').innerHTML = "Already have an account? <a href='#' onclick='switchTab(\"login\"); return false;'>Log in →</a>";
+    document.getElementById('auth-subtitle').innerHTML = "Already have an account? <a href='#' onclick='switchTab(\"login\"); return false;'>Log in \u2192</a>";
   }
 }
 
@@ -554,15 +560,13 @@ function hideAlerts() {
 
 function showError(msg) {
   const el = document.getElementById('alert-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
   document.getElementById('alert-success').style.display = 'none';
 }
 
 function showSuccess(msg) {
   const el = document.getElementById('alert-success');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
   document.getElementById('alert-error').style.display = 'none';
 }
 
@@ -577,7 +581,7 @@ function setLoading(btnId, loading) {
 window.checkStrength = function(val) {
   const bars = document.getElementById('strength-bars');
   bars.className = 'password-strength';
-  if (val.length === 0) return;
+  if (!val.length) return;
   if (val.length < 6) bars.classList.add('strength-weak');
   else if (val.length < 10) bars.classList.add('strength-medium');
   else bars.classList.add('strength-strong');
@@ -585,95 +589,81 @@ window.checkStrength = function(val) {
 
 window.handleLogin = async function() {
   hideAlerts();
-  if (!supabase) { showError('Still loading — please try again in a moment.'); return; }
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
   if (!password) { showError('Please enter your password.'); return; }
-
   setLoading('btn-login', true);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  setLoading('btn-login', false);
-
-  if (error) {
-    if (error.message.includes('Invalid login')) showError('Incorrect email or password. Please try again.');
-    else if (error.message.includes('Email not confirmed')) showError('Please check your email and confirm your account first.');
-    else showError(error.message);
-    return;
+  try {
+    const data = await sbSignIn(email, password);
+    setLoading('btn-login', false);
+    if (!data.access_token) {
+      const msg = data.error_description || data.msg || data.error || 'Login failed';
+      if (msg.toLowerCase().includes('invalid')) showError('Incorrect email or password.');
+      else if (msg.toLowerCase().includes('confirm')) showError('Please confirm your email first.');
+      else showError(msg);
+      return;
+    }
+    localStorage.setItem('acedit_session', JSON.stringify(data));
+    showSuccess('\u2713 Welcome back! Redirecting...');
+    setTimeout(() => { window.location.href = REDIRECT; }, 1000);
+  } catch(e) {
+    setLoading('btn-login', false);
+    showError('Network error - please check your connection and try again.');
   }
-  showSuccess('✓ Welcome back! Redirecting...');
-  window._redirecting = true;
-  setTimeout(() => { window.location.href = 'https://www.acedit.it.com/onboarding.html'; }, 1200);
 }
 
 window.handleSignup = async function() {
   hideAlerts();
-  if (!supabase) { showError('Still loading — please try again in a moment.'); return; }
   const first = document.getElementById('signup-first').value.trim();
   const last = document.getElementById('signup-last').value.trim();
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   const goal = document.getElementById('signup-goal').value;
-
   if (!first) { showError('Please enter your first name.'); return; }
   if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
   if (password.length < 8) { showError('Password must be at least 8 characters.'); return; }
   if (!goal) { showError('Please select what you are preparing for.'); return; }
-
   setLoading('btn-signup', true);
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        first_name: first,
-        last_name: last,
-        goal: goal,
-        full_name: `${first} ${last}`.trim()
-      }
+  try {
+    const data = await sbSignUp(email, password, {
+      first_name: first, last_name: last, goal, full_name: `${first} ${last}`.trim()
+    });
+    setLoading('btn-signup', false);
+    if (data.error || data.error_description) {
+      const msg = data.error_description || data.error || 'Signup failed';
+      if (msg.toLowerCase().includes('already')) showError('An account with this email already exists. Try logging in.');
+      else showError(msg);
+      return;
     }
-  });
-  setLoading('btn-signup', false);
-
-  if (error) {
-    if (error.message.includes('already registered')) showError('An account with this email already exists. Try logging in.');
-    else showError(error.message);
-    return;
-  }
-
-  if (data.user && !data.session) {
-    // Email confirmation required
-    showSuccess('✓ Account created! Check your email to confirm your account, then log in.');
-    setTimeout(() => switchTab('login'), 3000);
-  } else {
-    showSuccess('✓ Account created! Redirecting...');
-    window._redirecting = true;
-    setTimeout(() => { window.location.href = 'https://www.acedit.it.com/onboarding.html'; }, 1200);
+    if (!data.access_token) {
+      showSuccess('\u2713 Account created! Check your email to confirm, then log in.');
+      setTimeout(() => switchTab('login'), 3000);
+    } else {
+      localStorage.setItem('acedit_session', JSON.stringify(data));
+      showSuccess('\u2713 Account created! Redirecting...');
+      setTimeout(() => { window.location.href = REDIRECT; }, 1000);
+    }
+  } catch(e) {
+    setLoading('btn-signup', false);
+    showError('Network error - please check your connection and try again.');
   }
 }
 
-window.handleGoogle = async function() {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin + '/index.html'
-    }
-  });
-  if (error) showError('Google login failed: ' + error.message);
+window.handleGoogle = function() {
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(REDIRECT)}`;
 }
 
 window.handleForgotPassword = async function(e) {
   e.preventDefault();
   const email = document.getElementById('login-email').value.trim();
-  if (!email || !email.includes('@')) {
-    showError('Enter your email address above first, then click Forgot password.');
-    return;
+  if (!email || !email.includes('@')) { showError('Enter your email above first, then click Forgot password.'); return; }
+  try {
+    await sbResetPassword(email);
+    showSuccess('\u2713 Password reset email sent - check your inbox.');
+  } catch(e) {
+    showError('Could not send reset email. Please try again.');
   }
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/auth.html'
-  });
-  if (error) showError(error.message);
-  else showSuccess('✓ Password reset email sent — check your inbox.');
 }
 </script>
 </body>

@@ -601,42 +601,8 @@
   </div>
 
   <!-- ═══ SCREEN 1: Upload ═══ -->
-  <div id="screen-upload" class="screen active">
-    <h1>Let's get you<br><em>interview-ready.</em></h1>
-    <p class="subtitle">Upload your resume for a personalised interview — or skip straight to practice.</p>
-
-    <div class="card">
-      <h3 style="margin-bottom:4px;">📄 Resume <span style="font-size:12px; font-weight:400; color:var(--ink4);">(optional)</span></h3>
-      <p style="font-size:12px; color:var(--ink4); margin-bottom:14px;">Helps the AI ask questions based on your actual experience.</p>
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
-        <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
-      </div>
-
-      <div id="res-upload-area">
-        <div class="upload-zone">
-          <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
-          <div class="upload-icon">📎</div>
-          <p><strong>Click to upload</strong> or drag & drop</p>
-          <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
-        </div>
-        <div id="resume-file-preview"></div>
-      </div>
-
-      <div id="res-paste-area" style="display:none;">
-        <textarea id="resume-text" rows="7" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
-      </div>
-    </div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-      <button onclick="goToRoundSelect()" style="background:none; border:none; font-size:13px; color:var(--ink3); cursor:pointer; font-family:'DM Sans',sans-serif; padding:10px 0;">Skip — just practice →</button>
-      <button onclick="goToRoundSelect()" style="background:var(--accent); color:white; border:none; padding:11px 26px; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif;">Continue →</button>
-    </div>
-  </div>
-
   <!-- ═══ SCREEN 1b: Round Selection ═══ -->
-  <div id="screen-round" class="screen">
+  <div id="screen-round" class="screen active">
     <h2>What type of interview<br>are you practising?</h2>
     <p class="subtitle">We'll set the interviewer tone, style and question types to match exactly where you are in the process.</p>
 
@@ -685,8 +651,46 @@
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="goBack('screen-upload')">← Back</button>
-      <button class="btn btn-primary" id="round-continue-btn" onclick="goToOnboarding()" disabled>Continue →</button>
+      <button class="btn btn-ghost" onclick="window.location.href='onboarding.html'">← Back</button>
+      <button class="btn btn-primary" id="round-continue-btn" onclick="goToResume()" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 1c: Resume Upload ═══ -->
+  <div id="screen-resume" class="screen">
+    <h2>Upload your resume</h2>
+    <p class="subtitle">Optional — but the more context the AI has, the more tailored your questions will be.</p>
+
+    <div class="card">
+      <h3 style="margin-bottom:4px;">📄 Resume <span style="font-size:12px; font-weight:400; color:var(--ink4);">(optional)</span></h3>
+      <p style="font-size:12px; color:var(--ink4); margin-bottom:14px;">Helps the AI ask questions based on your actual experience.</p>
+
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="res-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showResUpload()">Upload file</button>
+        <button id="res-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showResPaste()">Paste text</button>
+      </div>
+
+      <div id="res-upload-area">
+        <div class="upload-zone">
+          <input type="file" id="resume-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('resume', this)"/>
+          <div class="upload-icon">📎</div>
+          <p><strong>Click to upload</strong> or drag & drop</p>
+          <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
+        </div>
+        <div id="resume-file-preview"></div>
+      </div>
+
+      <div id="res-paste-area" style="display:none;">
+        <textarea id="resume-text" rows="6" placeholder="Paste your resume text here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+      <button class="btn btn-ghost" onclick="goBack('screen-round')">← Back</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button onclick="goToOnboarding()" style="background:none; border:none; font-size:13px; color:var(--ink3); cursor:pointer; font-family:'DM Sans',sans-serif; padding:10px 0;">Skip →</button>
+        <button onclick="goToOnboarding()" style="background:var(--accent); color:white; border:none; padding:11px 26px; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif;">Continue →</button>
+      </div>
     </div>
   </div>
 
@@ -748,7 +752,7 @@
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="goBack('screen-round')">← Back</button>
+      <button class="btn btn-ghost" onclick="goBack('screen-resume')">← Back</button>
       <button class="btn btn-primary" onclick="goToInterview()">Continue →</button>
     </div>
   </div>
@@ -990,10 +994,10 @@ function setScreen(id) {
 }
 const stepMap = {
   'screen-apikey':    '',
-  'screen-upload':    'Step 1 of 5',
-  'screen-round':     'Step 2 of 5',
-  'screen-onboarding':'Step 3 of 5',
-  'screen-interview': 'Step 4 of 5',
+  'screen-round':     'Step 1 of 4',
+  'screen-resume':    'Step 2 of 4',
+  'screen-onboarding':'Step 3 of 4',
+  'screen-interview': 'Step 4 of 4',
   'screen-report':    'Step 5 of 5'
 };
 function setStepIndicator(screenId) {
@@ -1085,8 +1089,8 @@ function checkApiKeys() {
 function saveApiKeys() {
   state.apiKey = $('apikey-input').value.trim();
   state.openaiKey = $('openaikey-input').value.trim();
-  setScreen('screen-upload');
-  setStepIndicator('screen-upload');
+  setScreen('screen-round');
+  setStepIndicator('screen-round');
 }
 
 function goToRoundSelect() {
@@ -1248,6 +1252,11 @@ function updateConfidence(el) {
 
 // ─── Nav helpers ─────────────────────────────────────────────────────
 function goBack(screenId) { setScreen(screenId); setStepIndicator(screenId); }
+
+function goToResume() {
+  setScreen('screen-resume');
+  setStepIndicator('screen-resume');
+}
 
 function goToOnboarding() {
   setScreen('screen-onboarding');
@@ -2520,7 +2529,7 @@ async function callClaude(prompt) {
 function printReport() { window.print(); }
 
 // ─── Init ─────────────────────────────────────────────────────────────
-setStepIndicator('screen-upload');
+setStepIndicator('screen-round');
 </script>
 </body>
 </html>
