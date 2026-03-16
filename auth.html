@@ -506,7 +506,7 @@ body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;f
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://nrcwvyqbbvxjlkuyhlpa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk';
@@ -519,9 +519,12 @@ async function initAuth() {
 }
 initAuth();
 
-// Listen for OAuth redirect
+// Listen for OAuth redirect only
 supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session) window.location.replace('https://www.acedit.it.com/onboarding.html');
+  if (event === 'SIGNED_IN' && session && !window._redirecting) {
+    window._redirecting = true;
+    window.location.href = 'https://www.acedit.it.com/onboarding.html';
+  }
 });
 
 window.switchTab = function(tab) {
@@ -593,7 +596,8 @@ window.handleLogin = async function() {
     return;
   }
   showSuccess('✓ Welcome back! Redirecting...');
-  setTimeout(() => { window.location.href = 'https://www.acedit.it.com/onboarding.html'; }, 1500);
+  window._redirecting = true;
+  setTimeout(() => { window.location.href = 'https://www.acedit.it.com/onboarding.html'; }, 1200);
 }
 
 window.handleSignup = async function() {
@@ -636,7 +640,8 @@ window.handleSignup = async function() {
     setTimeout(() => switchTab('login'), 3000);
   } else {
     showSuccess('✓ Account created! Redirecting...');
-    setTimeout(() => { window.location.replace('https://www.acedit.it.com/onboarding.html'); }, 800);
+    window._redirecting = true;
+    setTimeout(() => { window.location.href = 'https://www.acedit.it.com/onboarding.html'; }, 1200);
   }
 }
 
