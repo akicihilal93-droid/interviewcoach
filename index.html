@@ -19,12 +19,12 @@
     --ink2: #3a3835;
     --ink3: #7a7670;
     --ink4: #b5b0a8;
-    --paper: #faf8f4;
-    --paper2: #f2ede4;
-    --paper3: #e8e0d0;
-    --accent: #c8622a;
-    --accent2: #e8a070;
-    --accent-light: #fdf0e8;
+    --paper: #ffffff;
+    --paper2: #faf9f7;
+    --paper3: #f0ece6;
+    --accent: #b8975a;
+    --accent2: #d4b47a;
+    --accent-light: #f5edd8;
     --green: #2d6a4f;
     --green-light: #e8f5ee;
     --amber: #92600a;
@@ -152,7 +152,7 @@
     color: white;
     border-color: var(--accent);
   }
-  .btn-primary:hover { background: #b5561f; border-color: #b5561f; }
+  .btn-primary:hover { background: #a0813f; border-color: #a0813f; }
   .btn-primary:disabled { background: var(--paper3); border-color: var(--paper3); color: var(--ink4); cursor: not-allowed; transform: none; }
   .btn-ghost { border-color: transparent; background: transparent; color: var(--ink3); }
   .btn-ghost:hover { background: var(--paper2); border-color: transparent; color: var(--ink); }
@@ -1455,8 +1455,20 @@ function toggleMic() {
 async function startIntMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    alert('Speech recognition not supported. Please use Microsoft Edge or Chrome.');
+    $('mic-status').textContent = '⚠️ Voice not supported on this browser. Please use Chrome or Edge on desktop, or Chrome on Android.';
+    $('mic-status').style.color = 'var(--red)';
+    // Show next button so they can still continue
+    $('next-only-btn').style.display = 'inline-flex';
+    $('next-only-btn').textContent = 'Skip question →';
     return;
+  }
+
+  // Check if iOS Safari — warn user
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (isIOS && isSafari) {
+    $('mic-status').textContent = '⚠️ Safari on iPhone has limited mic support. For best results, open this page in Chrome on desktop or Android.';
+    $('mic-status').style.color = 'var(--amber)';
   }
 
   // Request mic permission explicitly first
@@ -1476,7 +1488,7 @@ async function startIntMic() {
   $('mic-btn').textContent = '⏹️ Stop recording';
   $('mic-btn').style.background = '#8b2020';
   $('mic-btn').style.borderColor = '#8b2020';
-  $('mic-status').textContent = '● Recording… speak now';
+  $('mic-status').textContent = '● Recording… speak clearly';
   $('mic-status').style.color = '#8b2020';
   $('mic-timer').style.display = 'inline';
   $('mic-timer').textContent = '0:00';
@@ -1515,7 +1527,7 @@ async function startIntMic() {
     recognition.onerror = e => {
       if (e.error === 'no-speech') return;
       if (e.error === 'not-allowed') {
-        $('mic-status').textContent = '⚠️ Microphone blocked. Click the 🔒 icon in your browser address bar and allow microphone.';
+        $('mic-status').textContent = '⚠️ Microphone blocked. Click the 🔒 icon in your address bar and allow microphone.';
         $('mic-status').style.color = 'var(--red)';
         intIsRecording = false;
         clearInterval(micTimerInterval);
