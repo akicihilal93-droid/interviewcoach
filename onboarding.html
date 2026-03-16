@@ -457,10 +457,22 @@ body {
   background: white;
   border-radius: 50%;
   transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+.toggle input:checked ~ .toggle-thumb { 
+  transform: translateX(18px);
+}
+
+.toggle input:checked ~ .toggle-thumb::after {
+  content: '✓';
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 700;
+}
 
 .consent-text {}
 .consent-title {
@@ -810,22 +822,37 @@ body {
 
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://nrcwvyqbbvxjlkuyhlpa.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Non-blocking Supabase init
+let sb = null;
+function loadSupabase() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js';
+    script.onload = () => {
+      sb = window.supabase.createClient(
+        'https://nrcwvyqbbvxjlkuyhlpa.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3d2eXFiYnZ4amxrdXlobHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDcxMDIsImV4cCI6MjA4OTE4MzEwMn0.NSv-ap54WVUz7dEVDaIDBEVVirwyuLMf0uusITs3NHk'
+      );
+      resolve(sb);
+    };
+    script.onerror = () => resolve(null);
+    document.head.appendChild(script);
+  });
+}
 
-// Pre-fill name if available from localStorage or URL params
-window.addEventListener('load', () => {
-  // Try to get name from Supabase session quietly
-  sb.auth.getSession().then(({ data: { session } }) => {
+// Pre-fill name if available
+window.addEventListener('load', async () => {
+  try {
+    await loadSupabase();
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.user_metadata?.first_name) {
       document.getElementById('first-name').value = session.user.user_metadata.first_name;
       document.getElementById('last-name').value = session.user.user_metadata.last_name || '';
       checkStep1();
     }
-  }).catch(() => {});
+  } catch(e) {}
 });
 
 // ── State ──

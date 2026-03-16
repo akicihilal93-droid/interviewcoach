@@ -603,14 +603,7 @@
   <!-- ═══ SCREEN 1: Upload ═══ -->
   <div id="screen-upload" class="screen active">
     <h1>Let's get you<br><em>interview-ready.</em></h1>
-    <p class="subtitle">Add your resume and job details for a personalised interview — or skip straight to practice.</p>
-
-    <div class="card" style="margin-bottom:16px;">
-      <div class="field-group" style="margin-bottom:0;">
-        <label class="field-label">What's your preferred name? <em style="font-weight:400; color:var(--ink4);">(your interviewer will use this)</em></label>
-        <input type="text" id="candidate-name" placeholder="e.g. Sarah, Alex, Jamie…"/>
-      </div>
-    </div>
+    <p class="subtitle">Upload your resume for a personalised interview — or skip straight to practice.</p>
 
     <div class="card">
       <h3 style="margin-bottom:4px;">📄 Resume <span style="font-size:12px; font-weight:400; color:var(--ink4);">(optional)</span></h3>
@@ -636,36 +629,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <h3 style="margin-bottom:4px;">💼 Job Description <span style="font-size:12px; font-weight:400; color:var(--ink4);">(optional)</span></h3>
-      <p style="font-size:12px; color:var(--ink4); margin-bottom:14px;">Upload the full job spec for the most tailored experience — at minimum, make sure the job title above is filled in.</p>
-
-      <div style="margin-bottom:14px;">
-        <label style="display:block; font-size:13px; font-weight:500; color:var(--ink2); margin-bottom:6px;">Job title</label>
-        <input type="text" id="job-title" placeholder="e.g. Senior Product Manager, Full-Stack Engineer…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif;" oninput="this.style.borderColor='var(--paper3)'; document.getElementById('job-title-error').style.display='none';"/>
-        <div id="job-title-error" style="display:none; font-size:12px; color:var(--red); margin-top:5px;">Please enter the job title to continue.</div>
-      </div>
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button id="jd-btn-upload" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--accent); background:var(--accent); color:white; font-family:'DM Sans',sans-serif;" onclick="showJdUpload()">Upload file</button>
-        <button id="jd-btn-paste" style="flex:1; padding:8px; font-size:13px; font-weight:500; border-radius:var(--radius-sm); cursor:pointer; border:1.5px solid var(--paper3); background:white; color:var(--ink3); font-family:'DM Sans',sans-serif;" onclick="showJdPaste()">Paste text</button>
-      </div>
-
-      <div id="jd-upload-area">
-        <div class="upload-zone">
-          <input type="file" id="jd-file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onchange="handleFile('jd', this)"/>
-          <div class="upload-icon">📋</div>
-          <p><strong>Click to upload</strong> or drag & drop the job spec</p>
-          <p style="margin-top:4px; font-size:12px; color:var(--ink4);">PDF, Word (.doc .docx), or image</p>
-        </div>
-        <div id="jd-file-preview"></div>
-      </div>
-
-      <div id="jd-paste-area" style="display:none;">
-        <textarea id="jd-text" rows="7" placeholder="Paste the job description here…" style="width:100%; padding:10px 14px; border:1.5px solid var(--paper3); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; resize:vertical;"></textarea>
-      </div>
-    </div>
-
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
       <button onclick="goToRoundSelect()" style="background:none; border:none; font-size:13px; color:var(--ink3); cursor:pointer; font-family:'DM Sans',sans-serif; padding:10px 0;">Skip — just practice →</button>
       <button onclick="goToRoundSelect()" style="background:var(--accent); color:white; border:none; padding:11px 26px; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif;">Continue →</button>
@@ -674,7 +637,7 @@
 
   <!-- ═══ SCREEN 1b: Round Selection ═══ -->
   <div id="screen-round" class="screen">
-    <h2>What are you preparing for?</h2>
+    <h2>What type of interview<br>are you practising?</h2>
     <p class="subtitle">We'll set the interviewer tone, style and question types to match exactly where you are in the process.</p>
 
     <div style="display:grid; gap:12px; margin-bottom:28px;">
@@ -729,18 +692,19 @@
 
   <!-- ═══ SCREEN 2: Onboarding Assessment ═══ -->
   <div id="screen-onboarding" class="screen">
-    <h2>Tell us about yourself</h2>
-    <p class="subtitle">This helps the AI personalise your interview and focus on what matters most to you.</p>
+    <h2>A few quick questions</h2>
+    <p class="subtitle">Help the AI personalise your session and focus on what matters most to you.</p>
 
     <div class="card">
+
       <div class="field-group">
-        <label class="field-label">Experience level</label>
-        <div class="chips" id="exp-chips">
-          <div class="chip" onclick="selectChip('exp',this,'student')">Student / Graduate</div>
-          <div class="chip" onclick="selectChip('exp',this,'junior')">Junior (0–2 yrs)</div>
-          <div class="chip" onclick="selectChip('exp',this,'mid')">Mid-level (3–6 yrs)</div>
-          <div class="chip" onclick="selectChip('exp',this,'senior')">Senior (7+ yrs)</div>
-          <div class="chip" onclick="selectChip('exp',this,'lead')">Lead / Manager</div>
+        <label class="field-label">Interview type preference</label>
+        <div class="chips" id="int-type-chips">
+          <div class="chip selected" onclick="toggleMultiChip('intType',this,'general')">General mix</div>
+          <div class="chip" onclick="toggleMultiChip('intType',this,'behavioral')">Behavioural / STAR</div>
+          <div class="chip" onclick="toggleMultiChip('intType',this,'technical')">Technical</div>
+          <div class="chip" onclick="toggleMultiChip('intType',this,'case')">Case study</div>
+          <div class="chip" onclick="toggleMultiChip('intType',this,'hr')">HR / culture fit</div>
         </div>
       </div>
 
@@ -838,8 +802,9 @@
 
       <!-- Written question — shown after speaking -->
       <div class="question-text" id="question-text" style="display:none;"></div>
-      <div id="question-replay" style="display:none; margin-bottom:4px;">
+      <div id="question-replay" style="display:none; margin-bottom:4px; display:flex; gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="speak($('question-text').textContent)" style="font-size:12px;">🔊 Replay question</button>
+        <button class="btn btn-ghost btn-sm" onclick="pauseSpeak()" style="font-size:12px;" id="pause-btn">⏸ Pause</button>
       </div>
       <!-- Answer tip -->
       <div id="answer-tip" style="display:none; background:var(--blue-light); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; font-size:13px; color:var(--blue); line-height:1.6;"></div>
@@ -1357,6 +1322,18 @@ function pickBestVoice(voices) {
       || null;
   }
   return best;
+}
+
+function pauseSpeak() {
+  const btn = document.getElementById('pause-btn');
+  if (!btn) return;
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+    btn.textContent = '⏸ Pause';
+  } else {
+    window.speechSynthesis.pause();
+    btn.textContent = '▶ Resume';
+  }
 }
 
 // Add natural micro-pauses: replace punctuation with slight breath pauses
